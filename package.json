@@ -1,0 +1,23 @@
+{
+  "name": "lifebit-backend",
+  "version": "1.0.0",
+  "description": "lifebit-backend/ ├── src/ │   ├── api/ │   │   ├── controllers/  // Lógica de negocio (qué hacer con una petición) │   │   └── routes/       // Definición de las rutas/endpoints │   ├── config/           // Configuración (DB, etc.) │   ├── middleware/       // Middlewares (autenticación, logging, etc.) │   ├── services/         // Lógica de negocio reutilizable (ej. servicio de notificaciones) │   └── utils/            // Funciones de ayuda genéricas (ej. formatear fechas) └── ... (aquí irán package.json, app.js, etc.)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev" : "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "Julio Rhode",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.30.1",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2"
+  }
+}
