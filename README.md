@@ -77,9 +77,99 @@ git init
 `git add .`
 ## Tomar la primera "fotografía" (commit)
 `git commit -m "Initial project structure and setup"`
+
+`git commit -m "docs: Add project structure to README"`
+
+La palabra "docs:" al principio del commit es una convención para indicar que el cambio es sobre la documentación.
 ## Define la rama principal (branch)
 `git branch -M main`
 ## Conecta tu repositorio local con el de GitHub
 `git remote add origin https://github.com/juliorhode/lifebit-backend.git`
 ## Sube (push) tu código a GitHub por primera vez
 `git push -u origin main`
+
+## Comando s basicos Git
+
+## Guía Rápida de Comandos de Git
+
+Esta es una guía de referencia para los comandos de Git más comunes que usaremos en este proyecto.
+
+### Configuración Inicial (Solo se hace una vez por máquina)
+| Comando                                                 | Descripción                                          |
+| :------------------------------------------------------ | :--------------------------------------------------- |
+| `git config --global user.name "Tu Nombre"`             | Establece el nombre de autor para todos tus commits. |
+| `git config --global user.email "tu_email@example.com"` | Establece el email de autor para todos tus commits.  |
+
+### Crear y Clonar Repositorios
+| Comando                           | Descripción                                                               |
+| :-------------------------------- | :------------------------------------------------------------------------ |
+| `git init`                        | **Inicializa** un repositorio de Git en la carpeta actual.                |
+| `git clone <url_del_repositorio>` | **Clona** (descarga) un repositorio existente desde una URL (ej. GitHub). |
+
+### El Flujo de Trabajo Básico (El ciclo diario)
+| Comando                               | Descripción                                                                                                                                      |
+| :------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `git status`                          | Muestra el **estado** de tus archivos: cuáles están modificados, cuáles están en el área de preparación (staging), etc. **El comando más útil.** |
+| `git add <archivo>`                   | **Añade** un archivo específico al área de preparación (staging), preparándolo para el próximo commit.                                           |
+| `git add .`                           | **Añade todos** los archivos modificados y nuevos al área de preparación.                                                                        |
+| `git commit -m "Mensaje descriptivo"` | **Confirma** (guarda) los cambios del área de preparación en el historial del repositorio con un mensaje. Es como tomar una "fotografía".        |
+| `git push`                            | **Sube** tus commits confirmados desde tu repositorio local al repositorio remoto (ej. GitHub).                                                  |
+| `git pull`                            | **Descarga** los cambios más recientes del repositorio remoto y los fusiona con tu repositorio local.                                            |
+
+### Ramas (Branches) - Para trabajar en nuevas características
+| Comando                               | Descripción                                                                                     |
+| :------------------------------------ | :---------------------------------------------------------------------------------------------- |
+| `git branch`                          | Muestra un **listado** de todas las ramas locales.                                              |
+| `git branch <nombre_de_la_rama>`      | **Crea** una nueva rama.                                                                        |
+| `git checkout <nombre_de_la_rama>`    | **Cambia** a la rama especificada para empezar a trabajar en ella.                              |
+| `git checkout -b <nombre_de_la_rama>` | **Crea y cambia** a la nueva rama en un solo paso. (¡Muy común!)                                |
+| `git merge <nombre_de_la_rama>`       | **Fusiona** los cambios de la rama especificada en la rama en la que te encuentras actualmente. |
+| `git branch -d <nombre_de_la_rama>`   | **Elimina** una rama local (solo si ya ha sido fusionada).                                      |
+
+### Inspeccionar el Historial
+| Comando                                | Descripción                                                                                        |
+| :------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| `git log`                              | Muestra el **historial de commits** de la rama actual, del más reciente al más antiguo.            |
+| `git log --oneline --graph --decorate` | Muestra un historial más **compacto y visual**, con las ramas y etiquetas.                         |
+| `git diff`                             | Muestra las **diferencias** entre tus archivos de trabajo y el último commit.                      |
+| `git diff --staged`                    | Muestra las diferencias entre los archivos en el área de preparación (staging) y el último commit. |
+
+### Deshacer Cambios
+| Comando                     | Descripción                                                                                                                                                           |
+| :-------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `git checkout -- <archivo>` | **Descarta** los cambios en un archivo que aún no has añadido al staging (`git add`), volviendo a la versión del último commit. **¡CUIDADO, los cambios se pierden!** |
+| `git reset HEAD <archivo>`  | **Saca** un archivo del área de preparación (staging), pero mantiene los cambios en tus archivos de trabajo. Es lo contrario de `git add`.                            |
+| `git commit --amend`        | Te permite **modificar** el último commit (ej. para cambiar el mensaje o añadir un archivo que olvidaste).                                                            |
+
+## La Convención de "Conventional Commits"
+Es un conjunto de reglas sencillas sobre cómo escribir tus mensajes de commit. Propone una estructura simple para cada mensaje.
+
+- Claridad Absoluta: De un solo vistazo al historial, cualquiera puede entender la naturaleza de cada cambio sin tener que leer el código. ¿Fue una nueva característica? ¿Un arreglo? ¿Un cambio en la documentación?
+- Automatización: Herramientas automáticas pueden leer este historial para, por ejemplo, generar un CHANGELOG (un registro de cambios) automáticamente o para determinar cómo incrementar el número de versión de tu software (ej. un fix incrementa la versión de parche, un feat incrementa la versión menor).
+- Facilita la Revisión: Cuando trabajas en equipo, ayuda a tus compañeros a entender rápidamente qué hace cada conjunto de cambios.
+
+## Convención para Mensajes de Commit (Conventional Commits)
+
+Para mantener un historial de cambios limpio y legible, seguimos la especificación de "Conventional Commits". Cada mensaje de commit debe empezar con un tipo, seguido de una descripción concisa.
+
+| Tipo de Commit | Propósito                                                                                                                                                            | Ejemplo de Mensaje                                           |
+| :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| **`feat`**     | **(Feature)** Para cuando añades una **nueva característica** funcional.                                                                                             | `feat: Implementar login con Google`                         |
+| **`fix`**      | **(Bug Fix)** Para cuando **arreglas un error** (un bug) en el código.                                                                                               | `fix: Corregir error de cálculo en la generación de recibos` |
+| **`docs`**     | **(Documentation)** Para cambios que solo afectan a la **documentación** (ej. `README.md`, comentarios en el código).                                                | `docs: Añadir guía de comandos de Git al README`             |
+| **`style`**    | **(Styling)** Para cambios que no afectan la lógica, solo el **formato del código** (espacios, punto y coma, etc.). Usualmente hecho por herramientas como Prettier. | `style: Formatear el código del controlador de usuarios`     |
+| **`refactor`** | **(Refactoring)** Para cambios en el código que **ni arreglan un bug ni añaden una característica**, sino que mejoran la estructura o el rendimiento.                | `refactor: Extraer lógica de base de datos a un servicio`    |
+| **`test`**     | **(Testing)** Para cuando **añades o corriges pruebas** unitarias o de integración.                                                                                  | `test: Añadir pruebas para el modelo de usuarios`            |
+| **`chore`**    | **(Chore / Tareas)** Para cambios en el proceso de construcción, configuración o herramientas auxiliares que **no afectan al código fuente de producción**.          | `chore: Instalar y configurar dotenv`                        |
+| **`build`**    | Cambios que afectan el **sistema de construcción** o dependencias externas (ej. `package.json`).                                                                     | `build: Actualizar Express a la última versión`              |
+| **`ci`**       | **(Continuous Integration)** Cambios en los archivos y scripts de **integración continua** (ej. configuración de GitHub Actions).                                    | `ci: Configurar el workflow de despliegue a AWS`             |
+| **`revert`**   | Si un commit **revierte** un commit anterior. El mensaje suele ser autogenerado por `git revert`.                                                                    | `revert: feat: Implementar login con Google`                 |
+
+---
+**Ámbito Opcional:**
+
+A veces, es útil especificar en qué parte del proyecto ocurrió el cambio. Esto se pone entre paréntesis después del tipo.
+
+*   `feat(auth): Añadir endpoint para refrescar token`
+*   `fix(pagos): Resolver problema con la conciliación de Banco Mercantil`
+*   `docs(reglas): Explicar cómo funciona el simulador`
