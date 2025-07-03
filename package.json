@@ -1,8 +1,8 @@
 {
   "name": "lifebit-backend",
   "version": "1.0.0",
-  "description": "lifebit-backend/ ├── src/ │   ├── api/ │   │   ├── controllers/  // Lógica de negocio (qué hacer con una petición) │   │   └── routes/       // Definición de las rutas/endpoints │   ├── config/           // Configuración (DB, etc.) │   ├── middleware/       // Middlewares (autenticación, logging, etc.) │   ├── services/         // Lógica de negocio reutilizable (ej. servicio de notificaciones) │   └── utils/            // Funciones de ayuda genéricas (ej. formatear fechas) └── ... (aquí irán package.json, app.js, etc.)",
-  "main": "index.js",
+  "description": "Backend de la aplicación de gestión de condominios LifeBit, desarrollado con Node.js, Express y PostgreSQL.",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev" : "nodemon app.js"
