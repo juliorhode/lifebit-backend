@@ -4,8 +4,14 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 
-// Middleware para parsear cuerpos de peticion en formato JSON
+/* Importar Enrutadores */
+const edificiosRoutes = require('./src/api/routes/edificiosRoutes')
+
+/* Middleware para parsear cuerpos de peticion en formato JSON */
 app.use(express.json())
+
+/* Enrutadores */
+app.use('/api/edificios', edificiosRoutes)
 
 // ruta de prueba de verificacion que el servidor funciona
 app.get('/', (req, res) => {
