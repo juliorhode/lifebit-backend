@@ -183,3 +183,29 @@ Ejemplo de URL: http://localhost:3001/api/edificios?nombre=Sol&moneda=USD
 - nombre=Sol : Primer parámetro. La clave es nombre, el valor es Sol.
 - & : Separa los diferentes parámetros.
 - moneda=USD : Segundo parámetro.
+
+# Guía de Códigos de Estado HTTP
+### Respuestas Exitosas (Rango 2xx)
+| Código               | Nombre     | ¿Cuándo se usa?                                                                                                                                | Ejemplo de Uso en LifeBit                            |
+| :------------------- | :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| **`200 OK`**         | OK         | La respuesta estándar para peticiones `GET` exitosas. También se usa para `PATCH` o `PUT` exitosos si se devuelve el recurso actualizado.      | `GET /api/edificios` devuelve la lista de edificios. |
+| **`201 Created`**    | Created    | Se devuelve después de que una petición `POST` ha creado un nuevo recurso con éxito. La respuesta suele incluir el nuevo recurso en el cuerpo. | `POST /api/edificios` crea un nuevo edificio.        |
+| **`204 No Content`** | No Content | Se devuelve después de una operación exitosa que no necesita devolver ningún cuerpo de respuesta, típicamente para una petición `DELETE`.      | `DELETE /api/edificios/1` borra un edificio.         |
+
+### Errores del Cliente (Rango 4xx)
+Estos errores indican que el cliente ha hecho algo mal (ej. enviar datos incorrectos, pedir un recurso que no existe, no tener permisos).
+
+| Código                 | Nombre       | ¿Cuándo se usa?                                                                                                                          | Ejemplo de Uso en LifeBit                                                                                   |
+| :--------------------- | :----------- | :--------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **`400 Bad Request`**  | Bad Request  | El servidor no puede procesar la petición debido a un error del cliente (ej. datos faltantes, formato JSON malformado).                  | Un `POST` a `/api/edificios` sin el campo `nombre`.                                                         |
+| **`401 Unauthorized`** | Unauthorized | El cliente debe autenticarse para obtener la respuesta solicitada. **Nota:** El nombre es confuso; realmente significa "No Autenticado". | Intentar acceder a un dashboard sin haber iniciado sesión.                                                  |
+| **`403 Forbidden`**    | Forbidden    | El cliente está autenticado (ha iniciado sesión), pero **no tiene los permisos** necesarios para acceder a ese recurso específico.       | Un "Residente" intenta acceder a una ruta de "Administrador".                                               |
+| **`404 Not Found`**    | Not Found    | El servidor no pudo encontrar el recurso solicitado en la URL. Es el error más común.                                                    | Hacer un `GET` a `/api/edificios/999` cuando el ID 999 no existe.                                           |
+| **`409 Conflict`**     | Conflict     | La petición no se pudo completar debido a un conflicto con el estado actual del recurso.                                                 | Intentar crear un usuario con un email que ya existe en la base de datos (violando un constraint `UNIQUE`). |
+
+### Errores del Servidor (Rango 5xx)
+Estos errores indican que algo salió mal en **nuestro lado (el servidor)**. El cliente hizo una petición válida, pero no pudimos procesarla.
+
+| Código                          | Nombre                | ¿Cuándo se usa?                                                                                                                                  | Ejemplo de Uso en LifeBit                                                                       |
+| :------------------------------ | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| **`500 Internal Server Error`** | Internal Server Error | Un error genérico que indica una condición inesperada en el servidor que le impidió cumplir con la petición. Es nuestro "catch-all" por defecto. | Una consulta a la base de datos falla por una razón inesperada, o hay un bug en nuestro código. |
