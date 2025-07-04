@@ -173,3 +173,13 @@ A veces, es útil especificar en qué parte del proyecto ocurrió el cambio. Est
 *   `feat(auth): Añadir endpoint para refrescar token`
 *   `fix(pagos): Resolver problema con la conciliación de Banco Mercantil`
 *   `docs(reglas): Explicar cómo funciona el simulador`
+
+# Filtrado de Recursos mediante Query Parameters
+Son pares de clave-valor que se añaden al final de una URL después de un signo de interrogación (?). Se usan para pasar datos opcionales a una petición GET, como filtros, opciones de ordenación o paginación.
+
+Ejemplo de URL: http://localhost:3001/api/edificios?nombre=Sol&moneda=USD
+
+- ? : Inicia la sección de query parameters.
+- nombre=Sol : Primer parámetro. La clave es nombre, el valor es Sol.
+- & : Separa los diferentes parámetros.
+- moneda=USD : Segundo parámetro.
