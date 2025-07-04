@@ -16,9 +16,9 @@ Epopeya 0: Fundación del Proyecto y Arquitectura Core (CORE)
 
 [x] CORE-06: Establecer la conexión a la base de datos PostgreSQL.
 
-[ ] CORE-07: Implementar un sistema de logging de peticiones (middleware).
+[x] CORE-07: Implementar un sistema de logging de peticiones (middleware).
 
-[ ] CORE-08: Implementar un manejador de errores global centralizado.
+[x] CORE-08: Implementar un manejador de errores global centralizado.
 
 
 Epopeya 1: Autenticación y Gestión de Usuarios (AUTH)
@@ -63,6 +63,8 @@ Epopeya 2: Panel de Dueños de la Aplicación (DUEÑO)
 [ ] DUEÑO-08: [Módulo Soporte (SQL Runner)] - Crear un endpoint seguro (solo para Dueños) que pueda ejecutar consultas SQL de solo lectura (SELECT) en la base de datos.
 
 [ ] DUEÑO-09: [Módulo CMS Landing Page] - Crear endpoints CRUD para gestionar el contenido de las diferentes secciones de la página principal.
+
+[ ] DUEÑO-10: [Módulo Auditoría] - Implementar la visualización del log de auditoría y la funcionalidad para revertir cambios (basado en los datos guardados en el campo JSONB). 
 
 
 Epopeya 3: Panel de Administradores de Condominio (ADMIN)
