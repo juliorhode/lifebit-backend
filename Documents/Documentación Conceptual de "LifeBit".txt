@@ -1,0 +1,108 @@
+Entendido.
+
+Comprendo la directiva a la perfección. El objetivo es crear los tres artefactos fundamentales de nuestro proyecto: la Documentación Conceptual, los Roadmaps de Desarrollo y el Esquema de Base de Datos, cada uno con el máximo nivel de detalle y reflexión, y cada uno presentado para tu validación antes de proceder al siguiente.
+
+Este proceso es el que sigue un equipo de desarrollo profesional antes de escribir una sola línea de código significativa. Estoy listo para asumir este rol y aplicar el "pensamiento profundo" que solicitas.
+
+Artefacto 1: Documentación Conceptual de "LifeBit"
+
+A continuación, te presento el documento que encapsula la visión, los roles y las funcionalidades de la aplicación "LifeBit", basado en toda la información que me has proporcionado. Este será nuestro "documento constitucional".
+
+Documentación Conceptual y Funcional: Plataforma "LifeBit"
+1. Visión General del Producto
+
+LifeBit es una plataforma SaaS (Software as a Service) diseñada para modernizar y simplificar integralmente la gestión de condominios. Su objetivo es ofrecer una experiencia de usuario intuitiva y potente que centralice las operaciones financieras, administrativas y de comunicación, fomentando la transparencia y mejorando la calidad de vida en la comunidad.
+
+La arquitectura se basará en un stack tecnológico moderno: React para el frontend, Node.js (Express) para el backend, y PostgreSQL como base de datos. El sistema se diseñará desde el principio para ser escalable y desplegado en una infraestructura en la nube como AWS.
+
+2. Landing Page (Portal Público)
+
+Objetivo: Actuar como la cara pública de LifeBit, sirviendo como herramienta de marketing, centro de información y, fundamentalmente, como el embudo de captación de nuevos clientes.
+
+Estructura y Contenido: La página será dinámica, con todo su contenido gestionado desde el panel de Dueños (CMS). Incluirá:
+
+Header: Logo, nombre de la marca, y un único botón de "Login" para todos los roles de usuario.
+
+Secciones Informativas: Descripciones detalladas sobre la filosofía del producto, características clave, y la propuesta de valor del modelo SaaS.
+
+Planes y Servicios: Presentación de los diferentes niveles de licencia (Básico, Gold, Premium) en un formato visual atractivo (ej. tarjetas con efectos).
+
+Formulario de Contacto/Solicitud de Servicio: El principal "Call to Action". Un formulario donde un cliente potencial puede solicitar la contratación del servicio. Este formulario iniciará el proceso de onboarding.
+
+Flujo de Solicitud de Servicio: Un cliente potencial rellena el formulario con sus datos y los de su edificio, incluyendo la carga de documentos (cédula, documento de condominio). Esta acción crea una "solicitud" en el sistema que será revisada y aprobada manualmente por los Dueños de LifeBit para iniciar formalmente el alta del nuevo cliente.
+
+3. Rol: Dueño de la Aplicación
+
+Objetivo: Visión estratégica, control total de la plataforma, gestión de clientes y soporte de alto nivel. Es el rol de "Super Administrador" del SaaS.
+
+Dashboard: Centro de control global. Muestra alertas y resúmenes que requieren acción inmediata: solicitudes de servicio pendientes, pagos de licencias recibidos, incidencias de plataforma reportadas por administradores, y contratos próximos a vencer.
+
+Financiero: Herramienta de BI para la salud del negocio. Visualiza métricas clave a través de gráficas: número de clientes por zona geográfica y por plan de servicio; y un estado de resultados que compara ingresos (pago de licencias) contra egresos (costos de infraestructura como AWS, etc.).
+
+Contratos: El CRM de la plataforma. Permite gestionar todo el ciclo de vida de un cliente (edificio), desde la aprobación de una nueva solicitud hasta la gestión de contratos vigentes, morosos o por vencer. Incluye la capacidad de enviar comunicados por correo (manual o automáticamente).
+
+Noticias: Sistema de comunicación global. Permite crear contenido enriquecido (vía CKEditor) y dirigirlo a toda la base de clientes, a segmentos específicos (ej. todos los edificios con plan Premium) o a un edificio individual.
+
+Incidencias: El sistema de ticketing de Nivel 2. Aquí se reciben, gestionan y resuelven los reportes de problemas técnicos de la plataforma enviados por los administradores de los condominios.
+
+Pagos: Panel de conciliación bancaria para los pagos de licencias. El flujo es: 1) El administrador reporta el pago. 2) El Dueño recibe la notificación. 3) El Dueño sube el estado de cuenta del banco (CSV/Excel). 4) El sistema intenta un "match" automático. 5) Los pagos no conciliados se presentan para revisión manual.
+
+Encuestas: Herramienta de investigación de mercado para sondear a la base de clientes (admins y residentes) sobre posibles mejoras o nuevas características de la plataforma LifeBit.
+
+Soporte: Herramienta interna de "poder absoluto", extremadamente segura. Permite ejecutar consultas SQL (SELECT, INSERT, UPDATE, DELETE) directamente sobre la base de datos para resolver problemas complejos o realizar correcciones manuales. Todas las acciones aquí son auditadas de forma intensiva.
+
+Contenido (CMS): El panel de control total sobre la Landing Page. Permite crear, editar, activar/desactivar y reordenar (drag-and-drop) todas las secciones y contenidos visibles públicamente.
+
+4. Rol: Administrador de Condominio
+
+Objetivo: El corazón operativo. Es el "power user" que gestiona la vida diaria de uno o más condominios.
+
+Onboarding: El administrador es invitado por un Dueño de LifeBit. Recibe un enlace con un token único para completar su registro, ya sea vinculando su cuenta de Google o estableciendo una contraseña.
+
+Dashboard: Su centro de mando contextualizado al edificio que esté gestionando. Muestra resúmenes y alertas de todas las demás secciones: noticias, pagos de residentes pendientes, nuevas discusiones en el foro, etc.
+
+Registro de Usuarios: Herramienta para poblar el condominio de usuarios. Ofrece dos métodos:
+
+Manual: Para registrar residentes uno por uno.
+
+Masiva: Para registrar a todos los residentes de una vez mediante la subida de un archivo (CSV/Excel).
+
+En ambos casos, se inicia el flujo de invitación por email con token para que el residente complete su registro.
+
+Financiero: Panel de BI a nivel de condominio. Muestra gráficas de ingresos (cuotas, multas, reservas), egresos (gastos del edificio) y estado de morosidad.
+
+Noticias: CMS a nivel de condominio. Permite al admin crear y publicar noticias para los residentes de su edificio.
+
+Recursos y Cuentas: CRUDs para gestionar el inventario del edificio (puestos, salones de fiesta, llaves magnéticas) y las cuentas bancarias donde los residentes deben realizar sus pagos.
+
+Recibo y Multas: Flujo de facturación mensual. El admin registra los gastos del período. Al final del mes, "genera el recibo", y el sistema calcula y distribuye la deuda (alícuota) a cada unidad, añadiendo cargos adicionales como multas o pagos de reservas.
+
+Pagos: Panel de conciliación para los pagos de los residentes, con el mismo flujo de subir estado de cuenta y "matching" que tiene el Dueño, pero a nivel de condominio. También incluye el formulario para que el admin reporte el pago de la licencia del servicio a LifeBit.
+
+Reglas: El innovador motor de automatización. Mediante una interfaz visual (drag-and-drop), el admin crea reglas lógicas (Evento-Condición-Acción) para automatizar tareas como el cobro de multas, envío de notificaciones, etc.
+
+Discusiones, Encuestas, Votaciones, Elecciones: Módulos para fomentar la participación comunitaria. El admin actúa como creador y moderador de estos procesos.
+
+Traspaso de Poder: Tras una elección, es el Dueño de LifeBit quien ejecuta el cambio de rol, pero el proceso puede ser iniciado o solicitado por el admin saliente, garantizando una transición segura y ordenada.
+
+Reporte de Incidencias: El canal oficial del admin para comunicarse con el equipo de soporte de LifeBit y reportar problemas de la plataforma.
+
+5. Rol: Residente
+
+Objetivo: El usuario final. Su experiencia se centra en la conveniencia, la información y la participación dentro de su comunidad.
+
+Onboarding: Es invitado por su administrador. Recibe un enlace con un token para completar su registro (vía Google o contraseña).
+
+Dashboard: Su portal personalizado. Ve un resumen de lo que más le importa: si tiene pagos pendientes, el estado de sus reservas, nuevas noticias o votaciones, y notificaciones si ha sido mencionado en el foro.
+
+Financiero y Recibos: Visualiza de forma clara su estado de cuenta, sus deudas actuales y vencidas, y puede ver el desglose detallado de cada recibo mensual para entender qué está pagando.
+
+Pagos: El formulario principal de acción. Aquí reporta los pagos que ha realizado para su recibo de condominio o para el pago de una reserva, adjuntando el comprobante.
+
+Participación: Accede a las secciones de Noticias (lectura), Discusiones (lectura/escritura), Encuestas y Votaciones (participación), y Elecciones (postulación y voto) para ser un miembro activo de su comunidad.
+
+Servicios: Gestiona sus Recursos asignados (ver sus puestos de estacionamiento, etc.) y utiliza el módulo de Reservas (con su calendario de disponibilidad) para solicitar el uso de áreas comunes.
+
+Soporte y Documentación: Puede Reportar incidencias del condominio a su administrador y solicitar Cartas (ej. solvencia) a través de la plataforma.
+
+

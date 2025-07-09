@@ -3,23 +3,37 @@
 -- ###############################################################
 
 -- Tabla 1: usuarios
+-- =============================================================================
+-- || SCRIPT DE CREACIÓN DE LA TABLA: usuarios (Versión MVP)                ||
+-- =============================================================================
+-- || DESCRIPCIÓN: Almacena la información de cada persona registrada       ||
+-- ||              en la plataforma "LifeBit".                              ||
+-- =============================================================================
+
+-- Eliminamos la tabla si ya existe para poder re-ejecutar el script en desarrollo.
+DROP TABLE IF EXISTS usuarios CASCADE;
 CREATE TABLE usuarios (
-  id SERIAL PRIMARY KEY,
-  nombre VARCHAR(100),
-  apellido VARCHAR(100),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  contraseña VARCHAR(255),
-  telefono VARCHAR(50),
-  cedula VARCHAR(20) UNIQUE,
-  google_id VARCHAR(255) UNIQUE,
-  avatar_url VARCHAR(255),
-  token_registro VARCHAR(255) UNIQUE,
-  token_expiracion TIMESTAMPTZ,
-  estado VARCHAR(50) DEFAULT 'invitado' NOT NULL,
-  fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-  ultimo_login TIMESTAMPTZ
+
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    contraseña VARCHAR(255) NULL,
+    telefono VARCHAR(50),
+    cedula VARCHAR(20) UNIQUE,
+    rol VARCHAR(50) NOT NULL CHECK (rol IN ('dueño_app', 'administrador', 'residente')),
+    id_edificio INTEGER REFERENCES edificios(id) ON DELETE SET NULL,
+    google_id VARCHAR(255) UNIQUE NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'invitado' CHECK (estado IN ('invitado', 'activo', 'suspendido')),
+    token_registro VARCHAR(255) NULL,
+    fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-COMMENT ON TABLE usuarios IS 'Almacena el perfil individual de cada persona en la plataforma.';
+CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_usuarios_rol ON usuarios(rol);
+COMMENT ON TABLE usuarios IS 'Tabla central que almacena la información de cada persona en el sistema LifeBit.';
+COMMENT ON COLUMN usuarios.rol IS 'Define el nivel de acceso del usuario (dueño_app, administrador, residente) para el MVP.';
+COMMENT ON COLUMN usuarios.id_edificio IS 'FK que asocia un usuario a un edificio específico en el modelo MVP.';
 COMMENT ON COLUMN usuarios.contraseña IS 'Almacenada como un hash seguro (bcrypt). NULL si usa OAuth.';
 COMMENT ON COLUMN usuarios.google_id IS 'ID único proporcionado por Google para OAuth.';
 COMMENT ON COLUMN usuarios.token_registro IS 'Token de un solo uso para finalizar el registro.';

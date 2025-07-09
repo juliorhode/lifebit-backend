@@ -7,6 +7,7 @@ Backend de la aplicación de gestión de condominios LifeBit, desarrollado con N
 La estructura del proyecto está diseñada para ser escalable y mantener una clara separación de responsabilidades.
 
 # Estructura
+`tree -I "node_modules"` para excluir la carpeta node_modules
 ```
 ├── app.js
 ├── package.json
@@ -17,8 +18,8 @@ La estructura del proyecto está diseñada para ser escalable y mantener una cla
     │   ├── controllers
     │   └── routes
     ├── config
-    │   └── db.js
     ├── middleware
+    ├── querys
     ├── services
     └── utils
 ```
@@ -281,3 +282,162 @@ Es una librería y un algoritmo de hashing específicamente diseñado para contr
 
 ## Instalar bcrypt
 `npm install bcrypt`
+
+# Análisis de los Secretos JWT
+
+Estas cuatro variables de entorno son los parámetros de configuración para tu sistema de JSON Web Tokens (JWT). Un JWT es como una credencial o un pase de acceso digital que le entregas a un usuario después de que inicia sesión correctamente. Cada vez que ese usuario quiera acceder a una parte protegida de tu API, deberá presentar este "pase" para demostrar quién es.
+
+1. JWT_SECRET
+
+## ¿Qué es? 
+Es una cadena de texto larga, aleatoria y secreta que solo tu servidor conoce. Es, literalmente, la "clave secreta" que usas para "firmar" digitalmente cada JWT que emites.
+
+## ¿Cómo funciona? 
+Cuando un usuario inicia sesión, tú creas un JWT que contiene información sobre él (como su id de usuario y su rol). Luego, usas el JWT_SECRET para crear una firma criptográfica y la adjuntas al token. Cuando el usuario te envía el token de vuelta, tú usas el mismo JWT_SECRET para verificar que la firma sea válida.
+
+## Analogía: 
+Imagina que eres un guardia de seguridad en un evento exclusivo. Emites pases de acceso (JWTs) a los invitados. Para evitar falsificaciones, pones un sello invisible (la firma) en cada pase con una tinta especial (el JWT_SECRET) que solo tú tienes. Cuando alguien llega, usas tu luz ultravioleta (verificación con el JWT_SECRET) para comprobar el sello. Si el sello no está o es incorrecto, sabes que el pase es falso.
+
+## ¿Por qué es crucial? 
+Si alguien descubre tu JWT_SECRET, puede crear sus propios tokens válidos. Podría crear un token que diga "soy el Dueño de la Aplicación" y tu servidor lo aceptaría como auténtico, dándole control total sobre tu plataforma. Este es el secreto más importante de tu aplicación.
+
+## JWT_SECRET
+### Cómo generar un buen secreto:
+
+Puedes generar la contraseña desde tu terminal, ejecutando este comando (en Linux/macOS):
+
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+Copia la salida de ese comando y pégala como el valor de JWT_SECRET.
+
+### Ejemplo de un BUEN secreto: 
+8f4b2e1a9c6d3b7f2a1c8e5d9f0a7b4c3e2d1f0b9a8c7d6e5f4a3b2c1d0e9f8a
+
+### Ejemplo de un MAL secreto: 
+LifeBitSecretKey2023!
+
+## JWT_EXPIRES_IN
+
+### ¿Qué es? 
+Define el tiempo de vida del token de acceso principal (el JWT firmado con JWT_SECRET).
+
+### ¿Cómo funciona? 
+Es una cadena de texto que describe una duración. La librería que usaremos (jsonwebtoken) entiende formatos como 1h (1 hora), 7d (7 días), 15m (15 minutos), 365d (365 días). Después de este tiempo, el token "expira" y ya no es válido, incluso si la firma es correcta.
+
+### ¿Por qué se usa? 
+Por seguridad. Si un token es robado (por ejemplo, de un navegador infectado), el atacante solo tendrá acceso a la cuenta del usuario durante un tiempo limitado. Un tiempo de vida corto (como 15 minutos o 1 hora) reduce la ventana de oportunidad para un atacante.
+
+### ¿Qué debo colocar aquí? 
+Para un token de acceso principal, un valor entre 15m y 1h es un estándar de seguridad muy bueno. 1h (una hora) es un buen punto de partida para LifeBit.
+
+## JWT_REFRESH_SECRET
+
+### ¿Qué es? 
+Es OTRA clave secreta, completamente diferente de JWT_SECRET. Se usa para firmar un segundo tipo de token, llamado "Refresh Token".
+
+### ¿Para qué sirve? 
+Ya que el token de acceso principal dura poco (ej. 1 hora), sería muy molesto para el usuario tener que volver a iniciar sesión cada hora. El "Refresh Token" resuelve este problema.
+
+Flujo:
+
+- Cuando el usuario inicia sesión, le das DOS tokens: el de acceso (corta vida) y el de refresco (larga vida).
+
+- El usuario usa el token de acceso para todas sus peticiones normales.
+
+- Cuando el token de acceso expira, el frontend detecta el error "401 Unauthorized".
+
+- Automáticamente y sin que el usuario se dé cuenta, el frontend envía el "Refresh Token" a un endpoint especial (ej. /api/v1/auth/refresh).
+
+- El backend verifica este "Refresh Token" usando el JWT_REFRESH_SECRET. Si es válido, emite un NUEVO token de acceso (con una nueva vida de 1 hora) y se lo devuelve al frontend.
+
+- El frontend guarda este nuevo token de acceso y reintenta la petición que había fallado. El usuario ni se entera de que todo esto pasó.
+
+### ¿Por qué debe ser un secreto DIFERENTE?
+Porque el Refresh Token es mucho más poderoso y tiene una vida más larga. Separar los secretos te permite invalidar todos los tokens de acceso sin afectar los de refresco, y viceversa. Es una capa extra de seguridad.
+
+### ¿Qué debo colocar aquí? 
+Exactamente lo mismo que en JWT_SECRET: una cadena larga y aleatoria, generada de la misma manera, pero que sea diferente.
+
+Puedes generar la contraseña desde tu terminal, ejecutando este comando (en Linux/macOS):
+
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+## JWT_REFRESH_EXPIRES_IN
+
+### ¿Qué es? 
+Define el tiempo de vida del "Refresh Token".
+
+### ¿Qué debo colocar aquí? 
+Un valor mucho más largo que el del token de acceso. Valores comunes son 7d (7 días), 30d (30 días) o incluso 90d. Esto representa el tiempo máximo que un usuario puede permanecer "logueado" sin tener que volver a introducir su contraseña. Para LifeBit, 7d o 15d es un excelente punto de partida.
+
+| Variable | Propósito | Ejemplo de Valor    |
+| ------ | ---- | --------- |
+| JWT_SECRET   | Firmar tokens de acceso (corta vida). Clave de alta rotación.   | e3b0c442... (largo y aleatorio)    |
+| JWT_EXPIRES_IN  | Cuánto dura un token de acceso.   | 1h |
+| JWT_REFRESH_SECRET| Firmar tokens de refresco (larga vida). Clave de bajo uso.| a1b2c3d4... (largo y diferente)|
+| JWT_REFRESH_EXPIRES_IN| Cuánto dura un token de refresco.| 7d|
+
+# Middleware de Protección de Rutas
+## ¿Qué es? 
+Es un middleware que se colocará en las rutas que queremos proteger. 
+
+Su único trabajo será:
+- Revisar si la petición viene con un token de acceso.
+- Verificar que ese token sea válido (que no haya sido manipulado y que no haya expirado).
+- Si el token es válido, extraer la información del usuario (el payload que pusimos dentro) y añadirla al objeto req de la petición.
+- Si el token es inválido o no existe, denegar el acceso.
+## ¿Por qué es fundamental? 
+Es el guardián de la API. Asegura que solo los usuarios autenticados puedan realizar acciones sensibles, como ver sus datos financieros, crear una noticia o votar.
+
+---
+**hice la prueba con 30s, a pesar de darle varias veces desde postman a la ruta de perfil, al cabo de 30s expira.... aun asi este haciendo algo me va a expulsar? me refiero, aun teniendo actividad va a expirar? lo pregunto porque los bancos, si estas haciendo algo, se mantiene la sesion, pero si no haces nada, al cabo de un tiempo, te pregunta si vas a seguir, y si no hay respuesta, cierra la sesion**
+
+## la diferencia entre la expiración fija de un token y una sesión con "inactividad" (sliding session).
+
+### Lo que se tiene ahora (Expiración Fija): 
+Un accessToken de JWT es como un ticket de cine para una película que empieza a las 8:00 PM y termina a las 10:00 PM. No importa si entraste a las 8:00, a las 8:30 o a las 9:55. A las 10:00 PM en punto, el ticket ya no es válido y te sacan de la sala. Tu token, una vez emitido con una vida de 30 segundos, tiene una "fecha de muerte" grabada en su interior. A los 30 segundos, expira, sin importar cuánta actividad hayas tenido.
+
+Lo que hacen los bancos (Sesión Deslizante o "Sliding Session"): El sistema bancario funciona más como una tarjeta de acceso a un hotel. La tarjeta es válida por 24 horas. Cada vez que la usas para abrir la puerta de tu habitación, el sistema del hotel ve que sigues activo y automáticamente "reinicia el contador" de las 24 horas desde ese momento. Si dejas de usarla por más de 24 horas, la tarjeta se desactiva.
+
+### ¿Por qué nuestro accessToken no se renueva automáticamente con cada petición?
+
+Porque esa es la naturaleza de un JWT sin estado (stateless). El servidor emite el token y luego se "olvida" de él. No guarda un registro de cuándo fue la última vez que lo usaste. Toda la información de validez está contenida dentro del propio token. Esta es una gran ventaja para la escalabilidad (cualquier servidor puede validar el token sin necesidad de consultar una base de datos de sesiones), pero tiene la "desventaja" que acabas de descubrir.
+
+### La Solución: El Rol del refreshToken y la Lógica del Frontend
+
+Aquí es donde entra en juego la brillantez del patrón accessToken + refreshToken que ya hemos implementado. No es el backend el que "mantiene viva la sesión", es el frontend el que se encarga de renovarla de forma proactiva y silenciosa.
+
+Así es como funciona el flujo completo en una aplicación real (como la de un banco):
+
+- Login Inicial: El usuario inicia sesión. El backend le da un accessToken (vida corta, ej. 15 minutos) y un refreshToken (vida larga, ej. 7 días). El frontend guarda ambos de forma segura (por ejemplo, el refreshToken en una cookie HttpOnly).
+
+- Peticiones Normales: El frontend hace peticiones a las rutas protegidas (como /perfil) usando el accessToken en la cabecera Authorization: Bearer .... El backend valida este token y responde.
+
+- El Momento Crítico (El accessToken expira): El frontend hace una petición a /perfil y el backend responde con un error 401 Unauthorized y un mensaje como "Tu sesión ha expirado...".
+
+- La Magia Silenciosa (Lógica del Frontend): Aquí es donde el frontend inteligente entra en acción. En lugar de mostrarle un error al usuario y expulsarlo, hace lo siguiente automáticamente:
+  
+    - Intercepta la respuesta de error 401.  
+    - Pone en pausa la petición original que falló (la de /perfil).  
+    - Hace una NUEVA petición a un endpoint especial que crearemos: POST /api/v1/auth/refresh-token. En esta petición, envía el refreshToken que tiene guardado.
+
+- El Rol del Backend (Endpoint de Refresco):
+  - El endpoint /refresh-token recibe el refreshToken.
+  - Lo verifica usando el SECRETO DE REFRESCO (JWT_REFRESH_SECRET).
+  - Si es válido, el backend genera un NUEVO accessToken (con una nueva vida de 15 minutos) y lo devuelve al frontend.
+
+- Cierre del Círculo (Frontend de Nuevo):
+  - El frontend recibe el nuevo accessToken y lo guarda, reemplazando al antiguo que expiró.
+  - Ahora, reintenta la petición original que había fallado (la de /perfil), pero esta vez con el nuevo accessToken.
+
+- Resultado Final: La petición a /perfil ahora tiene éxito. El usuario recibe los datos de su perfil y nunca se dio cuenta de que todo este baile de renovación de tokens ocurrió en segundo plano. Para él, la sesión simplemente "continuó".
+
+## En resumen:
+
+Tú no vas a ser expulsado mientras tengas actividad, no porque el accessToken se renueve solo, sino porque tu frontend será lo suficientemente inteligente para detectar cuándo está a punto de expirar (o ya expiró) y usar el refreshToken para obtener uno nuevo sin que te des cuenta.
+
+Esta arquitectura desacoplada es extremadamente potente y es el estándar de la industria para aplicaciones web modernas.
+
+## Nuestro Próximo Paso: 
+
+Tenemos que construir ese endpoint POST /api/auth/refresh-token para completar el ciclo de vida de la sesión.

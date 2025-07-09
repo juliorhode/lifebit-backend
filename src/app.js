@@ -9,12 +9,10 @@ const morgan = require('morgan')
 
 const app = express()
 
-/* Importar manejador de errores */
-const errorHandler = require('./src/middleware/errorHandler')
+
 
 /* Importar Enrutadores */
-const edificiosRoutes = require('./src/api/routes/edificiosRoutes')
-const authRoutes = require('./src/api/routes/authRoutes')
+const authRoutes = require('./api/routes/authRoutes')
 
 /* Middleware para parsear cuerpos de peticion en formato JSON */
 app.use(express.json())
@@ -24,7 +22,6 @@ app.use(express.json())
 app.use(morgan('dev'))
 
 /* Enrutadores */
-app.use('/api/edificios', edificiosRoutes)
 app.use('/api/auth',authRoutes)
 
 // ruta de prueba de verificacion que el servidor funciona
@@ -32,8 +29,12 @@ app.get('/', (req, res) => {
     res.send("API de lifebit funcionando")
 })
 
+/* Importar manejador de errores */
+const errorHandler = require('./middleware/errorHandler')
 // Registramos el manejador de errores
 app.use(errorHandler)
+
+module.exports = app
 
 const PORT = process.env.PORT || 3000
 

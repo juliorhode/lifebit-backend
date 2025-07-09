@@ -1,11 +1,19 @@
-// El estado se establece en 'activo' porque este es un registro voluntario,
-// a diferencia de una invitación donde el estado inicial sería 'invitado'.
+// por defecto el estado inicial sería 'invitado'.
 // RETURNING nos devuelve los datos clave del usuario recién creado para confirmar el éxito.
 const CREA_USUARIO = `
-  INSERT INTO usuarios (nombre, apellido, email, contraseña, telefono, cedula, estado) 
-  VALUES ($1, $2, $3, $4, $5, $6, 'activo') RETURNING id, nombre, email, estado;`
+  insert into usuarios (nombre, apellido, email, contraseña, telefono, cedula) 
+  values ($1, $2, $3, $4, $5, $6) returning id, nombre, email, estado;`
+
+// verificamos si el usuario ya existe
+const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefono, cedula from usuarios where email = $1`
+
+// verificamos si el usuario ya existe
+const USUARIO_TOKEN = `select id, nombre, email, estado from usuarios where id = $1`
+
 
 // Exportamos la consulta corregida.
 module.exports = {
-	CREA_USUARIO,
+  CREA_USUARIO,
+  USUARIO_EXISTE,
+  USUARIO_TOKEN
 }

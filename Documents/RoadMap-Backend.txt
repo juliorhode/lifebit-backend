@@ -1,0 +1,138 @@
+# Roadmap de Desarrollo para "LifeBit" (v1.2)
+*********************************************
+
+## Epopeya 0: Fundación del Proyecto y Arquitectura Core (CORE) `[COMPLETADA]`
+*********************************************************************************
+
+*   `[x]` **CORE-01:** Crear estructura de carpetas profesional del proyecto backend.
+*   `[x]` **CORE-02:** Inicializar Git y crear repositorio privado en GitHub.
+*   `[x]` **CORE-03:** Inicializar proyecto Node.js con `npm` e instalar dependencias básicas.
+*   `[x]` **CORE-04:** Configurar `nodemon` y scripts `start`/`dev` en `package.json`.
+*   `[x]` **CORE-05:** Implementar manejo de variables de entorno seguras con `dotenv`.
+*   `[x]` **CORE-06:** Establecer la conexión a la base de datos PostgreSQL.
+*   `[x]` **CORE-07:** Implementar un sistema de logging de peticiones (middleware `morgan`).
+*   `[x]` **CORE-08:** Implementar un manejador de errores global centralizado.
+
+---
+
+## Epopeya 1: Autenticación y Gestión de Usuarios (AUTH) `[PRÓXIMA A INICIAR]`
+*********************************************************************************
+
+*   `[x]` **AUTH-01:** Diseñar e implementar el modelo de datos final para `usuarios` (Decisión MVP: relación 1-a-1 con `edificios`).
+*   `[ ]` **AUTH-02:** Implementar el flujo de registro/login tradicional con `email`/`password` y hashing (`bcrypt`).
+*   `[ ]` **AUTH-03:** Configurar Passport.js e implementar el flujo de login social con Google (OAuth 2.0).
+*   `[ ]` **AUTH-04:** Implementar la generación de JSON Web Tokens (JWT) al iniciar sesión.
+*   `[ ]` **AUTH-05:** Implementar el sistema de Refresh Tokens para sesiones seguras y persistentes.
+*   `[ ]` **AUTH-06:** Crear middleware `protegerRuta` para verificar el JWT en peticiones a rutas protegidas.
+*   `[ ]` **AUTH-07:** Crear middleware `verificarRol` para autorización (RBAC) distinguiendo Dueño, Admin, Residente.
+*   `[ ]` **AUTH-08:** Implementar el flujo de "finalizar registro" con token de invitación único enviado por email.
+*   `[ ]` **AUTH-09:** Configurar un servicio de envío de emails (ej. Nodemailer).
+
+---
+
+## Epopeya 2: Panel de Dueños de la Aplicación (DUEÑO)
+*************************************************************
+
+*   `[x]` **DUEÑO-01: [Módulo Edificios]** - Implementar CRUD completo y filtrado para la entidad `edificios`.
+*   `[ ]` **DUEÑO-02: [Módulo Contratos/Licencias]** - CRUD para gestionar las licencias y planes de los edificios.
+*   `[ ]` **DUEÑO-03: [Módulo Pagos de Servicio]** - Ver pagos reportados por Admins y validarlos contra estados de cuenta bancarios.
+*   `[ ]` **DUEÑO-04: [Módulo Noticias Globales]** - CRUD para crear noticias (con CKEditor) y dirigirlas a todos/grupos/un edificio.
+*   `[ ]` **DUEÑO-05: [Módulo Encuestas Globales]** - CRUD para crear encuestas/votaciones para la comunidad de admins/residentes.
+*   `[ ]` **DUEÑO-06: [Dashboard Financiero]** - Endpoints de agregación para datos de gráficas (ingresos vs. egresos, clientes por zona/plan).
+*   `[ ]` **DUEÑO-07: [Módulo Incidencias]** - Ver y gestionar los tickets de soporte generados por los Admins.
+*   `[ ]` **DUEÑO-08: [Módulo Soporte (SQL Runner)]** - Crear endpoint ultra-seguro para ejecutar consultas `SELECT` en la BD.
+*   `[ ]` **DUEÑO-09: [Módulo CMS Landing Page]** - Endpoints CRUD para gestionar el contenido y estructura de la página principal.
+*   `[ ]` **DUEÑO-10: [Módulo Auditoría]** - Implementar un sistema de logging de acciones críticas en una tabla `auditoria`.
+*   `[ ]` **DUEÑO-11: [Módulo Solicitudes]** - Endpoint para recibir y listar las nuevas solicitudes de contratación desde la Landing Page.
+
+---
+
+## Epopeya 3: Panel de Administradores de Condominio (ADMIN)
+********************************************************************
+
+*   `[ ]` **ADMIN-01: [Módulo Registro Residentes]** - Endpoints para registro manual y carga masiva (parseo de CSV/Excel).
+*   `[ ]` **ADMIN-02: [Módulo Recursos]** - CRUD para gestionar los recursos del edificio (puestos, salones, llaves).
+*   `[ ]` **ADMIN-03: [Módulo Recibos]** - Endpoints para carga de gastos y generación de recibos de condominio mensuales.
+*   `[ ]` **ADMIN-04: [Módulo Pagos Residentes]** - Ver pagos reportados por residentes y gestionar el flujo de conciliación.
+*   `[ ]` **ADMIN-05: [Módulo Discusiones (Foro)]** - CRUD completo para hilos y comentarios, con capacidades de moderación.
+*   `[ ]` **ADMIN-06: [Módulo Elecciones]** - Endpoints para gestionar el ciclo electoral (convocatoria, candidaturas, cierre, resultados).
+*   `[ ]` **ADMIN-07: [Motor de Reglas]** - CRUD para las reglas (guardadas como JSONB) y el motor de evaluación.
+*   `[ ]` **ADMIN-08: [Módulo Cuentas Bancarias]** - CRUD para que los admins registren las cuentas para recibir pagos.
+*   `[ ]` **ADMIN-09: [Módulo Multas]** - CRUD para aplicar multas a unidades específicas.
+*   `[ ]` **ADMIN-10: [Módulo Cartas]** - Endpoint para generar documentos (ej. cartas de solvencia).
+
+---
+
+## Epopeya 4: Panel de Residentes (RESIDENTE)
+*************************************************
+
+*   `[ ]` **RESIDENTE-01: [Dashboard]** - Endpoint de agregación para la vista principal del residente.
+*   `[ ]` **RESIDENTE-02: [Módulo Pagos]** - Endpoint para que un residente reporte un pago de condominio o reserva.
+*   `[ ]` **RESIDENTE-03: [Módulo Reservas]** - CRUD para solicitar, ver y cancelar reservas de áreas comunes.
+*   `[ ]` **RESIDENTE-04: [Módulo Votaciones/Encuestas]** - Endpoint para emitir votos/respuestas.
+*   `[ ]` **RESIDENTE-05: [Módulo Discusiones]** - Utilizar los endpoints del ADMIN para participar en el foro.
+*   `[ ]` **RESIDENTE-06: [Módulo Elecciones]** - Endpoints para postularse como candidato y para emitir el voto.
+*   `[ ]` **RESIDENTE-07: [Módulo Solicitud de Cartas]** - Endpoint para solicitar documentos como una carta de solvencia.
+*   `[ ]` **RESIDENTE-08: [Módulo Reporte de Incidencias]** - Endpoint para que un residente reporte un problema al administrador.
+
+
+# Roadmap Backend para "LifeBit" (v2.0 - Detallado)
+
+## Epopeya 0: Fundación del Proyecto (CORE) `[COMPLETADA]`
+*   `[x]` **CORE-01 a CORE-08:** Estructura, Git, `npm`, `dotenv`, DB, logging y manejo de errores.
+
+## Epopeya 1: El Ecosistema de Usuarios y Autenticación (AUTH) `[PRÓXIMA A INICIAR]`
+*   `[ ]` **AUTH-01: [DB]** - Implementar el modelo de datos para `usuarios` (rol, estado, token, etc.).
+*   `[ ]` **AUTH-02: [DB]** - Implementar el modelo de datos para `edificios`, `unidades` y la tabla `licencias`.
+*   `[ ]` **AUTH-03: [API]** - Crear el CRUD básico para la entidad `usuarios` (protegido, solo para admins/dueños).
+*   `[ ]` **AUTH-04: [API]** - Crear el CRUD básico para la entidad `edificios`.
+*   `[ ]` **AUTH-05: [Servicio]** - Implementar `bcrypt` para el hashing de contraseñas.
+*   `[ ]` **AUTH-06: [API]** - Crear endpoint público de `Login` que verifica el hash y la existencia del usuario.
+*   `[ ]` **AUTH-07: [Servicio]** - Implementar generación y verificación de JWT + Refresh Tokens.
+*   `[ ]` **AUTH-08: [API]** - Integrar la generación de tokens en el endpoint de `Login`.
+*   `[ ]` **AUTH-09: [Middleware]** - Crear middleware `protegerRuta` para validar el JWT.
+*   `[ ]` **AUTH-10: [Middleware]** - Crear middleware `verificarRol` para proteger endpoints según el rol del usuario.
+*   `[ ]` **AUTH-11: [Servicio]** - Configurar `Nodemailer` para envío de correos.
+*   `[ ]` **AUTH-12: [API]** - Implementar el flujo completo de `Invitación` (crear usuario 'invitado' con token y enviar email).
+*   `[ ]` **AUTH-13: [API]** - Implementar el flujo de `Finalizar Registro` (validar token y permitir al usuario crear su contraseña).
+*   `[ ]` **AUTH-14: [Servicio]** - Configurar `Passport.js` para el flujo de Google OAuth 2.0.
+
+## Epopeya 2: Flujo de Facturación y Pagos del Condominio (FINANZAS-CONDOMINIO)
+*   `[ ]` **FIN-C-01: [DB]** - Implementar tablas `gastos`, `recibos`, `recibos_unidades` y `multas`.
+*   `[ ]` **FIN-C-02: [API]** - CRUD para que el Admin gestione los `gastos` mensuales del edificio.
+*   `[ ]` **FIN-C-03: [Servicio]** - Crear `ServicioDeFacturacion` con la lógica transaccional para "Generar Recibos del Mes".
+*   `[ ]` **FIN-C-04: [API]** - Crear el endpoint que llama al `ServicioDeFacturacion`.
+*   `[ ]` **FIN-C-05: [DB]** - Implementar la tabla `pagos_residentes` y `cuentas_bancarias`.
+*   `[ ]` **FIN-C-06: [API]** - CRUD para que el Admin gestione las `cuentas_bancarias`.
+*   `[ ]` **FIN-C-07: [API]** - Endpoint para que el Residente reporte un `pago` (incluye subida de archivo con `multer`).
+*   `[ ]` **FIN-C-08: [Servicio]** - Crear `ServicioDeConciliacion` para el "matching" de pagos.
+*   `[ ]` **FIN-C-09: [API]** - Endpoint para que el Admin suba el estado de cuenta (CSV) y active el `ServicioDeConciliacion`.
+*   `[ ]` **FIN-C-10: [API]** - Endpoints de agregación para el Dashboard Financiero del Admin.
+
+## Epopeya 3: Flujo de Pagos del Servicio SaaS (FINANZAS-SAAS)
+*   `[ ]` **FIN-S-01: [API]** - Endpoint para que el Admin reporte el pago de la licencia a LifeBit.
+*   `[ ]` **FIN-S-02: [API]** - Endpoints para que el Dueño vea los pagos de licencias pendientes y problemáticos.
+*   `[ ]` **FIN-S-03: [API]** - Endpoints de agregación para el Dashboard Financiero del Dueño.
+
+## Epopeya 4: Comunicación y Comunidad (COMUNIDAD)
+*   `[ ]` **COM-01: [DB]** - Implementar tablas `noticias`, `noticias_audiencia`, `discusiones_hilos`, `discusiones_respuestas`.
+*   `[ ]` **COM-02: [API]** - CRUD para `Noticias` con lógica de targeting para Dueños y Admins.
+*   `[ ]` **COM-03: [API]** - CRUD completo para el `Foro de Discusiones` con lógica de moderación y anidación limitada.
+*   `[ ]` **COM-04: [DB]** - Implementar tablas para `Encuestas`, `Preguntas` y `Respuestas`.
+*   `[ ]` **COM-05: [API]** - CRUD para `Encuestas` y Votaciones.
+*   `[ ]` **COM-06: [DB]** - Implementar tablas para `Elecciones`, `Candidaturas` y `Votos`.
+*   `[ ]` **COM-07: [API]** - Endpoints para el ciclo electoral.
+*   `[ ]` **COM-08: [Servicio]** - Crear `ServicioDeTraspaso` para el cambio de rol post-elección (transaccional).
+*   `[ ]` **COM-09: [Cron Job]** - Tarea programada para cerrar votaciones/elecciones automáticamente.
+
+## Epopeya 5: Módulos de Gestión y Soporte (GESTION)
+*   `[ ]` **GES-01: [DB]** - Implementar tablas `recursos_edificio`, `areas_comunes`, `reservas`.
+*   `[ ]` **GES-02: [API]** - CRUD para `Recursos` y `Áreas Comunes`.
+*   `[ ]` **GES-03: [API]** - CRUD para `Reservas` con integración al Motor de Reglas.
+*   `[ ]` **GES-04: [DB]** - Implementar tablas `incidencias_condominio` e `incidencias_plataforma`.
+*   `[ ]` **GES-05: [API]** - Endpoints para el sistema de ticketing jerárquico.
+*   `[ ]` **GES-06: [DB]** - Implementar tabla `auditoria` con columnas `datos_anteriores` y `datos_nuevos` (JSONB).
+*   `[ ]` **GES-07: [Servicio]** - Crear `ServicioDeAuditoria` para ser llamado desde otros módulos.
+*   `[ ]` **GES-08: [API]** - Crear el endpoint ultra-seguro `Soporte (SQL Runner)` para Dueños.
+*   `[ ]` **GES-09: [DB]** - Implementar tabla `reglas` (JSONB).
+*   `[ ]` **GES-10: [Servicio]** - Crear `MotorDeReglasService` para evaluar las reglas.

@@ -1,0 +1,551 @@
+Artefacto Maestro Definitivo: El Blueprint de "LifeBit" (v1.1)
+
+Este documento es la fuente única y definitiva de verdad para el proyecto "LifeBit". Contiene la visión del producto, los flujos de trabajo detallados, los roadmaps de desarrollo sincronizados para backend y frontend, y el esquema completo de la base de datos. Está diseñado para permitir la continuación del desarrollo desde cualquier punto sin pérdida de contexto.
+
+Parte 1: Visión y Concepto del Producto
+
+1.1. Propósito Central:
+LifeBit es una plataforma SaaS (Software as a Service) diseñada para ser el sistema operativo central de la gestión de condominios. Su misión es reemplazar procesos manuales y fragmentados con una solución digital, intuitiva y transparente, mejorando la eficiencia administrativa y la calidad de vida en la comunidad.
+
+1.2. Stack Tecnológico:
+
+Backend: Node.js con el framework Express.
+
+Base de Datos: PostgreSQL.
+
+Frontend: React (utilizando la herramienta de construcción Vite).
+
+Despliegue: Arquitectura orientada a la nube (AWS).
+
+1.3. Principio de Desarrollo Sincronizado:
+El desarrollo se realizará mediante "rebanadas verticales". Por cada funcionalidad clave completada en el backend (ej. un conjunto de endpoints de API), se construirá inmediatamente la vista o componente correspondiente en el frontend de React para consumirla y probarla de principio a fin.
+
+Parte 2: Roles de Usuario y Flujos de Trabajo Clave
+
+2.1. Roles Fundamentales:
+
+Dueño de la App: El administrador del sistema SaaS. Gestiona los clientes (edificios), las finanzas del negocio y el soporte de la plataforma.
+
+Administrador de Condominio: El "power user". Gestiona la operativa diaria de uno o más edificios (para V2). Para el MVP, gestiona un solo edificio.
+
+Residente: El usuario final. Interactúa con su comunidad y gestiona sus responsabilidades y servicios dentro del condominio.
+
+2.2. Flujo de Onboarding (Alta de un Nuevo Edificio):
+
+Solicitud: Un cliente potencial llena un formulario en la Landing Page pública. Esta acción crea una solicitud_servicio con estado 'pendiente'.
+
+Aprobación (Manual por el Dueño): Un Dueño revisa la solicitud en su panel. Si la aprueba, el sistema ejecuta una transacción que crea el contrato, la licencia, el edificio, el usuario para el nuevo administrador (estado 'invitado') y la afiliacion que los vincula. Se genera un token_registro único.
+
+Invitación: El sistema envía un email al nuevo administrador con un enlace que contiene el token.
+
+Finalización: El administrador hace clic, es llevado a una página donde puede finalizar su registro, ya sea vinculando su cuenta de Google o creando su propia contraseña (que será hasheada con bcrypt). Su estado cambia a 'activo'.
+
+2.3. Flujo de Registro de Residentes:
+
+Un Administrador autenticado utiliza la función de "Registro de Usuarios" (manual o masiva). Para cada residente, el sistema repite el proceso de invitación: crea un usuario ('invitado', rol 'residente'), genera un token_registro y envía el email.
+
+2.4. Flujo Financiero Contable (Basado en Partida Doble):
+
+Registro de Evento Operativo: Un Admin registra un gasto en el sistema. O un Residente reporta un pago.
+
+Validación: El pago es conciliado y su estado cambia a 'validado'.
+
+Generación de Asiento Contable: El ServicioContable del backend se activa.
+
+Crea un registro en asientos_contables describiendo la transacción (ej. "Pago de cuota A-101").
+
+Crea al menos dos registros en movimientos_contables que balancean la ecuación. Ejemplo para un pago validado de $50:
+
+Débito (DEBE): +$50 a la cuenta plan_de_cuentas de "Banco" (Aumenta un Activo).
+
+Crédito (HABER): +$50 a la cuenta plan_de_cuentas de "Cuentas por Cobrar" (Disminuye un Activo).
+
+Generación de Reportes: La "Memoria y Cuenta" y otros reportes financieros se generan haciendo SUM sobre la tabla movimientos_contables, no sobre las tablas operativas.
+
+2.5. Flujo de Traspaso de Poder Post-Elección:
+
+Tras una elección, el resultado es visible. El administrador saliente o, en su defecto, un Dueño, puede iniciar el proceso de traspaso. Sin embargo, la acción final de ejecutar el cambio de roles en la base de datos es una prerrogativa exclusiva del Dueño de LifeBit para garantizar la seguridad y el control. Ambas partes son notificadas por email.
+
+2.6. Flujo de Incidencias (Ticketing Jerárquico):
+
+Residente -> Administrador: Para problemas del condominio (ej. "fuga de agua"). Se crea una incidencia de tipo 'condominio'.
+
+Administrador -> Dueño: Para problemas de la plataforma (ej. "bug en un reporte"). Se crea una incidencia de tipo 'plataforma'. Un admin puede "escalar" un ticket de residente, lo que crea un nuevo ticket de plataforma vinculado al original.
+
+Parte 3: Roadmaps de Desarrollo Sincronizados (Backend y Frontend)
+Roadmap Backend: Node.js / Express / PostgreSQL (v2.0 - Completo)
+Generated markdown
+# Roadmap Backend para "LifeBit" (v2.0 - Detallado)
+
+## Epopeya 0: Fundación del Proyecto (CORE) `[COMPLETADA]`
+*   `[x]` **CORE-01 a CORE-08:** Estructura, Git, `npm`, `dotenv`, DB, logging y manejo de errores.
+
+## Epopeya 1: Autenticación y Usuarios (AUTH) `[PRÓXIMA A INICIAR]`
+*   `[ ]` **AUTH-01: [DB]** - Implementar el modelo de datos para `usuarios`, `edificios`, `unidades`, `licencias`, `contratos` y `afiliaciones` (Modelo MVP 1-a-1).
+*   `[ ]` **AUTH-02: [API]** - Crear el CRUD básico para `usuarios` y `edificios`.
+*   `[ ]` **AUTH-03: [Servicio]** - Implementar `bcrypt` para el hashing de contraseñas.
+*   `[ ]` **AUTH-04: [API]** - Crear endpoint público de `Login` que verifica el hash.
+*   `[ ]` **AUTH-05: [Servicio]** - Implementar generación y verificación de JWT + Refresh Tokens.
+*   `[ ]` **AUTH-06: [API]** - Integrar la generación de tokens en el endpoint de `Login`.
+*   `[ ]` **AUTH-07: [Middleware]** - Crear middleware `protegerRuta` para validar el JWT.
+*   `[ ]` **AUTH-08: [Middleware]** - Crear middleware `verificarRol` para proteger endpoints según el rol.
+*   `[ ]` **AUTH-09: [Servicio]** - Configurar `Nodemailer` para envío de correos.
+*   `[ ]` **AUTH-10: [API]** - Implementar el flujo completo de `Invitación` (crear usuario 'invitado' con token y enviar email).
+*   `[ ]` **AUTH-11: [API]** - Implementar el flujo de `Finalizar Registro`.
+*   `[ ]` **AUTH-12: [Servicio]** - Configurar `Passport.js` para el flujo de Google OAuth 2.0.
+
+## Epopeya 2: Módulo de Contabilidad y Finanzas (CONTABILIDAD)
+*   `[ ]` **CONTA-01: [DB]** - Implementar las tablas del núcleo contable: `plan_de_cuentas`, `asientos_contables`, `movimientos_contables`.
+*   `[ ]` **CONTA-02: [API]** - CRUD para que el Admin gestione su `plan_de_cuentas`.
+*   `[ ]` **CONTA-03: [Servicio]** - Crear `ServicioContable` para encapsular la lógica de creación de asientos de partida doble.
+*   `[ ]` **CONTA-04: [DB]** - Implementar tablas operativas: `gastos`, `recibos_maestro`, `recibos_unidad`, `detalles_recibo`, `multas`.
+*   `[ ]` **CONTA-05: [API]** - CRUD para `gastos`. Integrar con `ServicioContable`.
+*   `[ ]` **CONTA-06: [Servicio]** - Crear `ServicioDeFacturacion` transaccional para "Generar Recibos del Mes". Integrar con `ServicioContable`.
+*   `[ ]` **CONTA-07: [API]** - Endpoint para `generar-recibos-mes`.
+*   `[ ]` **CONTA-08: [DB]** - Implementar tablas `pagos`, `aplicacion_pagos`, `tasas_cambio`.
+*   `[ ]` **CONTA-09: [API]** - Endpoint para que Residente/Admin reporten un `pago`.
+*   `[ ]` **CONTA-10: [Servicio]** - Crear `ServicioDeConciliacion` para "matching" de pagos. Integrar con `ServicioContable`.
+*   `[ ]` **CONTA-11: [API]** - Endpoint para subir estado de cuenta y activar la conciliación.
+*   `[ ]` **CONTA-12: [API]** - Endpoints de agregación para reportes (`Memoria y Cuenta`) basados en `movimientos_contables`.
+
+## Epopeya 3: Módulos de Comunidad y Gestión (GESTION)
+*   `[ ]` **GEST-01: [DB & API]** - CRUD para `noticias` y su sistema de targeting.
+*   `[ ]` **GEST-02: [DB & API]** - CRUD para el `Foro de Discusiones` (`hilos` y `respuestas`).
+*   `[ ]` **GEST-03: [DB & API]** - CRUD para el sistema unificado de `consultas_populares` (Encuestas, Votaciones, Elecciones).
+*   `[ ]` **GEST-04: [DB & API]** - CRUD para `recursos` y `reservas`.
+*   `[ ]` **GEST-05: [DB & API]** - CRUD para el sistema jerárquico de `incidencias`.
+*   `[ ]` **GEST-06: [DB & API]** - CRUD para `reglas` (JSONB).
+*   `[ ]` **GEST-07: [Servicio]** - Crear `MotorDeReglasService` e integrarlo en los flujos correspondientes (reservas, facturación).
+
+## Epopeya 4: Módulos de Sistema y SaaS (SISTEMA)
+*   `[ ]` **SIS-01: [DB & API]** - CRUD para el `CMS de la Landing Page`.
+*   `[ ]` **SIS-02: [DB & Servicio]** - Implementar `ServicioDeAuditoria` y su tabla.
+*   `[ ]` **SIS-03: [API]** - Crear el endpoint ultra-seguro `Soporte (SQL Runner)`.
+*   `[ ]` **SIS-04: [Cron Job]** - Implementar tareas programadas (ej. cierre de votaciones, recordatorios de pago).
+
+Roadmap Frontend: React / Vite (v2.0 - Completo)
+Generated markdown
+# Roadmap Frontend para "LifeBit" (React)
+
+## Epopeya F0: Fundación del Proyecto (CORE-FE)
+*   `[x]` **CORE-FE-01 a CORE-FE-06:** Configuración de Vite, carpetas, `React Router`, librería de UI, gestor de estado (`Zustand`) y `apiService` (`axios`).
+
+## Epopeya F1: Vistas Públicas y Autenticación (AUTH-FE)
+*   `[ ]` **AUTH-FE-01:** Construir la Landing Page pública (renderizada desde el CMS).
+*   `[ ]` **AUTH-FE-02:** Construir el formulario de "Solicitud de Servicio".
+*   `[ ]` **AUTH-FE-03:** Construir la página de Login y la lógica de autenticación.
+*   `[ ]` **AUTH-FE-04:** Implementar la lógica post-login (guardar tokens, redirigir por rol).
+*   `[ ]` **AUTH-FE-05:** Crear el componente "Ruta Protegida".
+*   `[ ]` **AUTH-FE-06:** Construir la página "Finalizar Registro" para usuarios invitados.
+*   `[ ]` **AUTH-FE-07:** Construir el Layout principal (Sidebar, Header).
+
+## Epopeya F2: Vistas del Módulo Financiero
+*   `[ ]` **VISTA-F-01:** [Admin] Interfaz para gestionar el `plan_de_cuentas`.
+*   `[ ]` **VISTA-F-02:** [Admin] Interfaz para registrar `gastos`.
+*   `[ ]` **VISTA-F-03:** [Admin] Botón y flujo para "Generar Recibos del Mes".
+*   `[ ]` **VISTA-F-04:** [Residente] Vista detallada del `recibo` y su historial.
+*   `[ ]` **VISTA-F-05:** [Residente] Formulario para reportar un `pago`.
+*   `[ ]` **VISTA-F-06:** [Admin] Interfaz de conciliación de pagos y subida de estado de cuenta.
+*   `[ ]` **VISTA-F-07:** [Todos] Construcción de los Dashboards Financieros con librerías de gráficos.
+
+## Epopeya F3: Vistas de Comunidad y Gestión
+*   `[ ]` **VISTA-C-01:** [Todos] Interfaz para `Noticias` (creación y visualización).
+*   `[ ]` **VISTA-C-02:** [Todos] Interfaz para el `Foro de Discusiones`.
+*   `[ ]` **VISTA-C-03:** [Todos] Interfaces para `Encuestas`, `Votaciones` y `Elecciones`.
+*   `[ ]` **VISTA-C-04:** [Todos] Interfaz para `Reservas` (con calendario) y gestión de `Recursos`.
+*   `[ ]` **VISTA-C-05:** [Admin] Interfaz `drag-and-drop` para el `Motor de Reglas`.
+
+
+Parte 4: Esquema de Base de Datos Definitivo (PostgreSQL/DBML - v3.1)
+
+// =================================================================================
+// || ESQUEMA DE BASE DE DATOS DEFINITIVO PARA "LifeBit" (v3.1 - CONTABILIDAD)    ||
+// =================================================================================
+// || Este diseño es la fuente de la verdad para toda la estructura de datos.     ||
+// || Contempla todas las entidades y relaciones discutidas con un núcleo         ||
+// || contable basado en partida doble para máxima robustez.                      ||
+// =================================================================================
+
+Project lifebit_db {
+  database_type: 'PostgreSQL'
+  Note: 'Esquema de datos exhaustivo para la plataforma SaaS de gestión de condominios LifeBit.'
+}
+
+// --- CORE: Entidades Fundamentales de Identidad y Estructura ---
+
+Table usuarios {
+  id serial [pk, note: 'PK: Identificador único de la PERSONA en todo el sistema']
+  nombre varchar(100) [not null]
+  apellido varchar(100) [not null]
+  email varchar(255) [unique, not null]
+  contraseña varchar(255) [note: 'Hash de Bcrypt. NULL si usa OAuth']
+  telefono varchar(50)
+  cedula varchar(20) [unique]
+  avatar_url varchar(255) [note: 'URL a imagen en S3']
+  google_id varchar(255) [unique]
+  estado varchar(50) [not null, default: 'invitado', note: 'invitado, activo, suspendido']
+  token_registro varchar(255)
+  fecha_creacion timestamptz [not null, default: `now()`]
+  fecha_actualizacion timestamptz [not null, default: `now()`]
+  Note: 'Almacena la información personal de cada PERSONA física en el sistema. Es la fuente única de verdad para la identidad.'
+}
+
+Table edificios {
+  id serial [pk, note: 'PK: Identificador único del EDIFICIO/CONDOMINIO']
+  nombre varchar(255) [not null]
+  direccion text
+  id_contrato integer [ref: > contratos.id, unique, not null]
+  moneda_funcional varchar(3) [not null, default: 'USD']
+  fecha_creacion timestamptz [not null, default: `now()`]
+  Note: 'Representa cada CONDOMINIO o propiedad gestionada. Es la entidad "cliente" principal del SaaS.'
+}
+
+Table afiliaciones {
+  id serial [pk]
+  id_usuario integer [ref: > usuarios.id, not null]
+  id_edificio integer [ref: > edificios.id, not null]
+  id_unidad integer [ref: < unidades.id, note: 'NULL para roles a nivel de edificio (Admin/Gestor)']
+  rol varchar(50) [not null, note: 'dueño_app, administrador, gestor, residente']
+  es_propietario boolean [not null, default: false]
+  es_arrendatario boolean [not null, default: false]
+  indexes { (id_usuario, id_edificio, id_unidad, rol) [unique, name: 'idx_afiliacion_unica'] }
+  Note: 'Tabla de unión crucial (el "pegamento"). Define QUÉ ROL juega un USUARIO y DÓNDE (en un Edificio o Unidad específica). Es el corazón de los permisos.'
+}
+
+Table unidades {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  numero_unidad varchar(50) [not null]
+  alicuota numeric(8, 4) [not null, default: 0, note: 'Porcentaje de participación en gastos comunes']
+  metros_cuadrados numeric(10, 2)
+  tipo varchar(50) [note: 'apartamento, local']
+  indexes { (id_edificio, numero_unidad) [unique] }
+  Note: 'Representa una unidad individual (apartamento, local) dentro de un edificio.'
+}
+
+// --- GESTIÓN SAAS: Licencias, Contratos y Solicitudes ---
+
+Table licencias {
+  id serial [pk]
+  nombre_plan varchar(50) [not null, unique]
+  caracteristicas jsonb [note: 'JSON con flags de características habilitadas. Ej: {"motor_reglas": true}']
+  Note: 'Catálogo de los PLANES DE SERVICIO (Básico, Premium) que ofrece LifeBit.'
+}
+
+Table contratos {
+  id serial [pk]
+  id_licencia integer [ref: > licencias.id, not null]
+  fecha_inicio date [not null]
+  fecha_vencimiento date [not null]
+  estado varchar(50) [not null, default: 'activo']
+  monto_mensual numeric(12, 2) [not null]
+  Note: 'Registra el CONTRATO de servicio activo entre LifeBit y un Edificio, definiendo su duración y costo.'
+}
+
+Table solicitudes_servicio {
+  id serial [pk]
+  nombre_solicitante varchar(255) [not null]
+  email_solicitante varchar(255) [not null]
+  telefono_solicitante varchar(50)
+  cedula_solicitante varchar(20)
+  id_archivo_cedula integer [ref: > archivos.id]
+  nombre_edificio varchar(255) [not null]
+  direccion_edificio text
+  id_documento_condominio integer [ref: > archivos.id]
+  id_licencia_solicitada integer [ref: > licencias.id, not null]
+  estado varchar(50) [not null, default: 'pendiente']
+  fecha_solicitud timestamptz [not null, default: `now()`]
+  Note: 'Almacena las SOLICITUDES de nuevos clientes que llegan desde la Landing Page.'
+}
+
+// --- NÚCLEO CONTABLE ---
+
+Table plan_de_cuentas {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  codigo_cuenta varchar(20) [not null]
+  nombre_cuenta varchar(100) [not null]
+  tipo_cuenta varchar(50) [not null, note: 'Activo, Pasivo, Patrimonio, Ingreso, Egreso']
+  permite_movimientos boolean [not null, default: true]
+  indexes { (id_edificio, codigo_cuenta) [unique] }
+  Note: 'El catálogo de cuentas contables para cada edificio.'
+}
+
+Table asientos_contables {
+  id bigserial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  fecha date [not null]
+  descripcion text [not null]
+  referencia_origen varchar(100) [note: 'ej. "pago_id_123", "gasto_id_456"']
+  Note: 'El Libro Diario. Cada fila es una transacción contable completa.'
+}
+
+Table movimientos_contables {
+  id bigserial [pk]
+  id_asiento integer [ref: > asientos_contables.id, not null]
+  id_cuenta integer [ref: > plan_de_cuentas.id, not null]
+  debe numeric(15, 2) [not null, default: 0]
+  haber numeric(15, 2) [not null, default: 0]
+  Note: 'El Libro Mayor. Cada fila es un débito o un crédito de un asiento, debe estar siempre balanceado.'
+}
+
+
+// --- FINANZAS OPERATIVAS (Vinculadas al núcleo contable) ---
+
+Table gastos {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  descripcion text [not null]
+  monto numeric(12, 2) [not null]
+  fecha_gasto date [not null]
+  categoria varchar(100)
+  id_factura_adjunta integer [ref: > archivos.id]
+  id_asiento_contable integer [ref: > asientos_contables.id, note: 'Vincula el gasto a su registro contable']
+  Note: 'Registro de cada GASTO individual incurrido por un condominio.'
+}
+
+Table recibos_maestro {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  mes integer [not null]
+  año integer [not null]
+  fecha_emision date [not null]
+  fecha_vencimiento date [not null]
+  total_gastos_comunes numeric(15, 2) [not null]
+  estado varchar(50) [not null, default: 'generado']
+  indexes { (id_edificio, mes, año) [unique] }
+  Note: 'Representa el "corte de cuentas" o CICLO DE FACTURACIÓN de un mes para un edificio.'
+}
+
+Table recibos_unidad {
+  id serial [pk]
+  id_recibo_maestro integer [ref: > recibos_maestro.id, not null]
+  id_unidad integer [ref: > unidades.id, not null]
+  monto_total_a_pagar numeric(12, 2) [not null]
+  estado_pago varchar(50) [not null, default: 'pendiente', note: 'pendiente, pagado_parcial, pagado, en_mora']
+  saldo_restante numeric(12, 2) [not null]
+  Note: 'La "FACTURA" o deuda específica de una unidad para un ciclo de facturación.'
+}
+
+Table detalles_recibo {
+  id bigserial [pk]
+  id_recibo_unidad integer [ref: > recibos_unidad.id, not null]
+  concepto text [not null]
+  monto numeric(12, 2) [not null]
+  id_gasto_origen integer [ref: < gastos.id]
+  id_multa_origen integer [ref: < multas.id]
+  id_reserva_origen integer [ref: < reservas.id]
+  Note: 'Cada LÍNEA DE COBRO que compone el total de un recibo de unidad, garantizando total transparencia.'
+}
+
+Table multas {
+    id serial [pk]
+    id_unidad integer [ref: > unidades.id, not null]
+    monto numeric(10, 2) [not null]
+    motivo text [not null]
+    fecha_aplicacion date [not null]
+    estado varchar(50) [not null, default: 'pendiente', note: 'pendiente, facturada, pagada']
+    Note: 'Registro de PENALIZACIONES monetarias aplicadas a una unidad por infracciones.'
+}
+
+Table pagos {
+  id serial [pk]
+  id_usuario_pagador integer [ref: > usuarios.id, not null]
+  id_edificio integer [ref: > edificios.id, not null]
+  monto numeric(12, 2) [not null]
+  moneda varchar(3) [not null]
+  fecha_pago date [not null]
+  metodo_pago varchar(50)
+  referencia varchar(100)
+  id_comprobante_adjunto integer [ref: > archivos.id]
+  tipo_pago varchar(50) [not null, note: 'condominio, reserva, licencia_saas']
+  estado varchar(50) [not null, default: 'en_verificacion']
+  id_tasa_cambio integer [ref: < tasas_cambio.id]
+  id_asiento_contable integer [ref: > asientos_contables.id, note: 'Vincula el pago a su registro contable']
+  Note: 'Registro de cada TRANSACCIÓN de pago realizada en la plataforma.'
+}
+
+Table aplicacion_pagos {
+  id_pago integer [ref: > pagos.id, not null]
+  id_recibo_unidad integer [ref: > recibos_unidad.id, not null]
+  monto_aplicado numeric(12, 2) [not null]
+  indexes { (id_pago, id_recibo_unidad) [pk] }
+  Note: 'Tabla de unión que resuelve la relación muchos-a-muchos entre Pagos y Deudas, permitiendo pagos parciales y abonos.'
+}
+
+Table tasas_cambio {
+  id serial [pk]
+  fecha date [not null, unique]
+  tasa numeric(18, 6) [not null]
+  fuente varchar(50)
+  Note: 'Registro histórico de las TASAS DE CAMBIO diarias para conversiones de moneda.'
+}
+
+Table cuentas_bancarias {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  banco varchar(100) [not null]
+  numero_cuenta varchar(50) [not null]
+  titular varchar(255) [not null]
+  cedula_rif varchar(20) [not null]
+  tipo_pago varchar(50) [not null]
+  telefono varchar(50)
+  esta_activa boolean [not null, default: true]
+  Note: 'Almacena las CUENTAS BANCARIAS del condominio donde los residentes deben realizar sus pagos.'
+}
+
+// --- GESTIÓN Y COMUNIDAD: Recursos, Comunicación y Participación ---
+
+Table recursos_edificio {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  nombre varchar(100) [not null]
+  tipo varchar(50) [not null, note: 'asignable, rentable']
+  Note: 'Catálogo de los TIPOS de recursos que existen en un edificio (ej. "Puesto de Estacionamiento").'
+}
+
+Table recursos_asignados {
+  id serial [pk]
+  id_recurso_edificio integer [ref: > recursos_edificio.id, not null]
+  id_unidad integer [ref: > unidades.id, not null]
+  identificador_unico varchar(100)
+  Note: 'Registro de la ASIGNACIÓN de un recurso específico (ej. "Puesto E-101") a una unidad concreta.'
+}
+
+Table areas_comunes {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  nombre varchar(100) [not null]
+  tarifa_reserva numeric(10, 2)
+  reglas_uso text
+  Note: 'Catálogo de las ÁREAS COMUNES rentables del edificio (ej. "Salón de Fiestas").'
+}
+
+Table reservas {
+  id serial [pk]
+  id_area_comun integer [ref: > areas_comunes.id, not null]
+  id_afiliacion_solicitante integer [ref: > afiliaciones.id, not null]
+  fecha_inicio timestamptz [not null]
+  fecha_fin timestamptz [not null]
+  estado varchar(50) [not null, default: 'pendiente']
+  id_pago_asociado integer [ref: < pagos.id]
+  Note: 'Registro de las SOLICITUDES de reserva de áreas comunes por parte de los residentes.'
+}
+
+Table noticias {
+  id serial [pk]
+  id_usuario_autor integer [ref: > usuarios.id, not null]
+  id_edificio_destino integer [ref: < edificios.id, note: 'NULL si es una noticia global de LifeBit']
+  titulo text [not null]
+  contenido_html text [not null]
+  fecha_publicacion timestamptz [not null, default: `now()`]
+  Note: 'Almacena el contenido de las NOTICIAS, ya sean globales o específicas de un condominio.'
+}
+
+Table discusiones_hilos {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  id_afiliacion_creador integer [ref: > afiliaciones.id, not null]
+  titulo text [not null]
+  estado varchar(50) [not null, default: 'abierto']
+  fecha_creacion timestamptz [not null, default: `now()`]
+  Note: 'Cada registro es un HILO de conversación principal en el foro de un edificio.'
+}
+
+Table discusiones_respuestas {
+  id serial [pk]
+  id_hilo integer [ref: > discusiones_hilos.id, not null]
+  id_afiliacion_autor integer [ref: > afiliaciones.id, not null]
+  id_respuesta_padre integer [ref: < discusiones_respuestas.id, note: 'Para anidación']
+  contenido text [not null]
+  fecha_creacion timestamptz [not null, default: `now()`]
+  Note: 'Cada registro es un COMENTARIO o respuesta dentro de un hilo de discusión.'
+}
+
+Table consultas_populares {
+  id serial [pk]
+  id_edificio integer [ref: < edificios.id, note: 'NULL si es global']
+  id_usuario_creador integer [ref: > usuarios.id, not null]
+  titulo text [not null]
+  descripcion text
+  tipo varchar(50) [not null, note: 'encuesta_abierta, encuesta_cerrada, eleccion']
+  fecha_fin timestamptz [not null]
+  estado varchar(50) [not null, default: 'activa']
+  Note: 'Tabla unificada para gestionar todos los procesos de participación: ENCUESTAS, VOTACIONES y ELECCIONES.'
+}
+
+Table opciones_consulta {
+  id serial [pk]
+  id_consulta integer [ref: > consultas_populares.id, not null]
+  texto_opcion text
+  id_usuario_candidato integer [ref: < usuarios.id, note: 'Para elecciones, referencia al candidato']
+  Note: 'Almacena las OPCIONES para una consulta (ej. "Sí/No", o los candidatos de una elección).'
+}
+
+Table respuestas_consulta {
+  id bigserial [pk]
+  id_consulta integer [ref: > consultas_populares.id, not null]
+  id_afiliacion_votante integer [ref: > afiliaciones.id, not null]
+  id_opcion_elegida integer [ref: < opciones_consulta.id, note: 'NULL si es respuesta abierta']
+  respuesta_abierta text
+  fecha_respuesta timestamptz [not null, default: `now()`]
+  indexes { (id_consulta, id_afiliacion_votante) [unique, name: 'idx_voto_unico'] }
+  Note: 'Registra el VOTO o respuesta de un usuario a una consulta específica, asegurando unicidad.'
+}
+
+// --- SISTEMA: Tablas transversales para auditoría, archivos, etc. ---
+
+Table reglas {
+  id serial [pk]
+  id_edificio integer [ref: > edificios.id, not null]
+  nombre varchar(255) [not null]
+  evento_disparador varchar(100) [not null]
+  definicion jsonb [not null, note: 'Estructura lógica completa de la regla en formato JSON']
+  esta_activa boolean [not null, default: true]
+  Note: 'Almacena las REGLAS DE NEGOCIO personalizadas (en formato JSONB) para cada edificio.'
+}
+
+Table archivos {
+  id serial [pk]
+  nombre_original varchar(255) [not null]
+  url_recurso varchar(255) [not null, unique, note: 'La URL/key del objeto en el bucket de S3']
+  mime_type varchar(100) [not null]
+  tamaño_bytes integer [not null]
+  id_usuario_subio integer [ref: > usuarios.id, not null]
+  fecha_subida timestamptz [not null, default: `now()`]
+  Note: 'Repositorio central polimórfico para los metadatos de TODOS los archivos subidos al sistema.'
+}
+
+Table auditoria {
+  id bigserial [pk]
+  id_usuario_actor integer [ref: < usuarios.id, note: 'NULL si la acción es del sistema']
+  accion varchar(50) [not null]
+  nombre_tabla varchar(100)
+  id_registro_afectado text
+  datos_anteriores jsonb
+  datos_nuevos jsonb
+  timestamp timestamptz [not null, default: `now()`]
+  Note: 'Registro inmutable de todas las acciones de escritura en la base de datos para auditoría y posibles reversos.'
+}
+
+Table incidencias {
+  id serial [pk]
+  id_afiliacion_reporta integer [ref: > afiliaciones.id, not null]
+  titulo varchar(255) [not null]
+  descripcion text [not null]
+  tipo varchar(50) [not null, note: 'condominio, plataforma']
+  estado varchar(50) [not null, default: 'abierto']
+  id_ticket_padre integer [ref: < incidencias.id, note: 'Para escalar tickets']
+  Note: 'Sistema de TICKETING jerárquico para reportar problemas.'
+}
+
+Table cartas {
+  id serial [pk]
+  id_afiliacion_solicitante integer [ref: > afiliaciones.id, not null]
+  tipo_carta varchar(100) [not null]
+  estado varchar(50) [not null, default: 'solicitada']
+  id_archivo_generado integer [ref: < archivos.id]
+  fecha_solicitud timestamptz [not null, default: `now()`]
+  Note: 'Registro de las solicitudes y la emisión de DOCUMENTOS formales (ej. cartas de solvencia).'
+}
+

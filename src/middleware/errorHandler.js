@@ -7,25 +7,33 @@
  * @param {function} next - La función para pasar al siguiente middleware.
  */
 
-const errorHandler = (error, peticion, respuesta, next) => {
-	// Imprimimos el error completo en la consola del servidor. (para nosotros)
-	// .stack nos da la traza completa del error.
-	console.error(error.stack)
+const errorHandler = (error, req, res, next) => {
 	// Determinar el código de estado
 	// Si el error ya tiene un código de estado (porque lo establecimos en otro lugar),
 	// lo usamos. Si no, por defecto es un error 500 - Internal Server Error.
-	const statusCode = error.statusCode || 500
+	error.statusCode = error.statusCode || 500
+	error.status = error.status || 'error'
+	// Imprimimos el error completo en la consola del servidor. (para nosotros)
+	// .stack nos da la traza completa del error.
+	// console.error(error.stack)
+	console.error('ERROR 💥',error)
 	// Determinar el mensaje de error
 	// De nuevo, si el error tiene un mensaje, lo usamos.
 	// Si no, enviamos un mensaje genérico.
-	const mensaje = error.message || 'Ha ocurrido un error interno en el servidor.'
+	const mensaje =
+		error.message || 'Ha ocurrido un error interno en el servidor.'
 	// Enviar la respuesta de error al cliente
-    // Enviamos una respuesta JSON estandarizada.
-    respuesta.status(statusCode).json({
+	// Enviamos una respuesta JSON estandarizada.
+	res.status(error.statusCode).json({
 		error: {
+			success: false,
+			status: error.status,
 			mensaje: mensaje,
 			// Opcional: Solo en desarrollo, podríamos enviar más detalles.
-			stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+			stack:
+				process.env.NODE_ENV === 'development'
+					? error.stack
+					: undefined,
 		},
 	})
 }
