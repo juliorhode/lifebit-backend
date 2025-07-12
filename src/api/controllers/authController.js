@@ -55,13 +55,13 @@ const register = async (req, res, next) => {
 		// Guardar el usuario en la base de datos.
 		const values = [nombre, apellido, email, passHash, telefono, cedula]
 		// desestructuro rows y lo renombro al mismo tiempo
-		const { rows: newUser } = await db.query(queries.CREA_USUARIO, values)
+		const { rows: nuevoUsuario } = await db.query(queries.CREA_USUARIO, values)
 		// Enviar respuesta exitosa.
 		// No devolvemos la contraseña hasheada.
 		res.status(201).json({
 			// 201 Created
 			message: 'Usuario registrado exitosamente.',
-			data: newUser,
+			data: nuevoUsuario,
 		})
 	} catch (error) {
 		// Manejo de errores (ej. email duplicado)
@@ -116,9 +116,11 @@ const login = async (req, res, next) => {
 		}
 		// 5. Si el usuario y la contraseña son correctos, generamos los tokens.
 		// Creamos el payload para los tokens.
+		// ADR-001: Usamos el rol directamente de la tabla usuarios para el MVP.
 		const payload = {
 			id: usuario.id,
-			// aqui deberiamos obtener el rol de la tabla afiliaciones (por ahora asumiremos el rol generico)
+			rol: usuario.rol,
+			id_edificio: usuario.id_edificio_actual, // Incluimos el ID del edificio en el token
 		}
 		const tokens = generaTokens(payload)
 		// 6. Enviar los tokens y la información del usuario en la respuesta.
@@ -201,7 +203,8 @@ const refreshToken = async (req, res, next) => {
 		// Creamos el payload con la información fresca del usuario.
 		const payload = {
 			id: usuario.id,
-			//rol: usuario.rol para el futuro
+			// rol: usuario.rol,
+			// id_edificio: user.id_edificio_actual, // Incluimos el ID del edificio en el token
 		}
 		// ¡Ojo! Solo generamos un nuevo accessToken. El refreshToken original sigue siendo válido
 		// hasta que expire. No necesitamos emitir uno nuevo en cada refresco.

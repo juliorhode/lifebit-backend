@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const authController = require('../controllers/authController')
-const protegeRuta  = require('../../middleware/authMiddleware')
+const {protegeRuta}  = require('../../middleware/authMiddleware')
 
 // Ruta para el registro de nuevos usuarios.
 // POST /api/auth/registro
@@ -12,6 +12,7 @@ router.post('/registro', authController.register)
 router.post('/login', authController.login)
 
 // No necesita protección, ya que su "protección" es la validez del propio refreshToken
+// POST /api/auth/refresh-token
 router.post('/refresh-token', authController.refreshToken)
 
 // Ruta de temporal para ruta protegida

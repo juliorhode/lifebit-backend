@@ -537,3 +537,45 @@ CREATE TABLE cartas (
 );
 COMMENT ON TABLE cartas IS 'Registro de las solicitudes y la emisión de DOCUMENTOS formales (ej. cartas de solvencia).';
 
+
+-- -----------------------------------------------------------------------------
+-- ADR-001: Modelo de Roles y Afiliaciones para el MVP
+-- -----------------------------------------------------------------------------
+-- Añadimos la columna 'rol' con un valor por defecto seguro.
+ALTER TABLE usuarios
+ADD COLUMN rol VARCHAR(50) NOT NULL DEFAULT 'residente';
+
+-- Añadimos la columna que vinculará a un usuario con su edificio principal para el MVP.
+-- La hacemos NULABLE porque un dueño_app no pertenece a ningún edificio.
+ALTER TABLE usuarios
+ADD COLUMN id_edificio_actual INTEGER REFERENCES edificios(id) ON DELETE SET NULL;
+
+-- Documentamos las columnas para nuestro yo del futuro
+COMMENT ON COLUMN usuarios.rol IS 'ADR-001: Rol simplificado para V1. A ser migrado a tabla "afiliaciones" en V2.';
+COMMENT ON COLUMN usuarios.id_edificio_actual IS 'ADR-001: ID del edificio principal del usuario para V1. A ser migrado a tabla "afiliaciones" en V2.';
+
+-- Le damos el rol de 'dueño_app' a nuestro usuario principal para poder probar.
+-- Reemplaza con tu email.
+UPDATE usuarios SET rol = 'dueño_app' WHERE email = 'juliorhode@gmail.com';
+
+select * from usuarios where email='juliorhode@gmail.com';
+
+-- ver la informacion de una tabla
+SELECT table_catalog , column_name, column_default, is_nullable, data_type
+FROM information_schema.columns
+WHERE table_name = 'usuarios';
+
+DROP DATABASE IF EXISTS lifebit_dev;
+commit;
+CREATE DATABASE lifebit_dev;
+
+-- verificar las conexiones
+SELECT * FROM pg_stat_activity;
+
+-- expulsar la conexion
+SELECT pg_terminate_backend(64245);
+SELECT pg_terminate_backend(64247);
+SELECT pg_terminate_backend(64384);
+SELECT pg_terminate_backend(65387);
+
+

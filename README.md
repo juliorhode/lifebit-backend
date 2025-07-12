@@ -441,3 +441,31 @@ Esta arquitectura desacoplada es extremadamente potente y es el estándar de la 
 ## Nuestro Próximo Paso: 
 
 Tenemos que construir ese endpoint POST /api/auth/refresh-token para completar el ciclo de vida de la sesión.
+
+# ADR-001: Modelo de Roles y Afiliaciones para el MVP
+## Título: 
+Simplificación del Modelo de Roles para la V1.  
+
+## Contexto: 
+El sistema final requiere un modelo de muchos-a-muchos donde un usuario puede tener múltiples roles en múltiples edificios a través de una tabla afiliaciones. Implementar este modelo desde el inicio introduce una complejidad significativa en el flujo de login (requiriendo selección de perfil contextual) y ralentiza el desarrollo de funcionalidades clave del MVP.
+Decisión: Para la V1, se implementará un modelo simplificado de uno-a-uno. Se añadirán las columnas rol y id_edificio_actual (nombre provisional) directamente a la tabla usuarios. Esto asume que para el MVP, cada usuario tiene un único rol principal y está asociado a un único edificio en un momento dado.
+
+## Consecuencias y Plan de Refactorización (V2):
+Deuda Técnica Aceptada: Esta decisión introduce deuda técnica que deberá ser resuelta para implementar la funcionalidad multi-rol.
+
+## Acciones de Refactorización para V2:
+### Migración de Datos: 
+- Crear un script para migrar los datos de usuarios.rol y usuarios.id_edificio_actual a la tabla afiliaciones.
+- Modificar authController.login: Reimplementar el login para que, tras una autenticación exitosa, devuelva una lista de perfiles/afiliaciones disponibles para el usuario.
+- Implementar Selección de Perfil (Frontend): El frontend deberá mostrar esta lista y permitir al usuario seleccionar con qué perfil desea iniciar la sesión.
+- Modificar JWT payload: El payload del token deberá incluir id_afiliacion para mantener el contexto de la sesión activa.
+- Actualizar Middlewares (protegerRuta, verificarRol): Deberán leer el id_afiliacion del token y verificar los permisos basándose en la afiliación activa.
+- Eliminar Columnas: Una vez migrado y probado, eliminar las columnas rol y id_edificio_actual de la tabla usuarios.
+
+**Documentación de Código: Todo el código relacionado con esta simplificación será marcado con un comentario específico:  
+// ADR-001: Simplificación de Roles V1.**
+
+| Si en el archivo de origen	| Entonces en el archivo de destino |	Ejemplo de uso |
+|-|-|-|
+| Exportas un objeto con llaves: `module.exports = { funcA, funcB };`|Importas con llaves (desestructuración): `const { funcA, funcB } = require(...)` |Ideal para controladores y servicios, donde un archivo agrupa varias funciones relacionadas. |
+|Exportas una única cosa sin llaves: `module.exports = MiClase;` |Importas sin llaves: `const MiClase = require(...)` |Ideal para clases, configuraciones de DB, o un único middleware que vive en su propio archivo. |

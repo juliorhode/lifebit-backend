@@ -8,7 +8,9 @@ const CREA_USUARIO = `
 const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefono, cedula from usuarios where email = $1`
 
 // verificamos si el usuario ya existe
-const USUARIO_TOKEN = `select id, nombre, email, estado from usuarios where id = $1`
+// const USUARIO_TOKEN = `select id, nombre, email, estado from usuarios where id = $1`
+// ADR-001: Traemos el rol y el id_edificio directamente de la tabla usuarios.
+const USUARIO_TOKEN = `select id, nombre, email, estado, rol, id_edificio_actual from usuarios where id = $1`
 
 
 // Exportamos la consulta corregida.

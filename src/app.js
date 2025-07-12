@@ -1,18 +1,15 @@
 // Carga las variables de entorno desde .env
 require('dotenv').config()
-
 const express = require('express')
-
 // Importamos morgan para el logger
 const morgan = require('morgan')
 
-
 const app = express()
-
-
 
 /* Importar Enrutadores */
 const authRoutes = require('./api/routes/authRoutes')
+const ownerRoutes = require('./api/routes/ownerRoutes')
+const licenciaRoutes = require('./api/routes/licenciaRoutes')
 
 /* Middleware para parsear cuerpos de peticion en formato JSON */
 app.use(express.json())
@@ -22,7 +19,9 @@ app.use(express.json())
 app.use(morgan('dev'))
 
 /* Enrutadores */
-app.use('/api/auth',authRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/owner', ownerRoutes)
+app.use('/api/owner/licencias',licenciaRoutes)
 
 // ruta de prueba de verificacion que el servidor funciona
 app.get('/', (req, res) => {
@@ -36,8 +35,3 @@ app.use(errorHandler)
 
 module.exports = app
 
-const PORT = process.env.PORT || 3000
-
-app.listen(PORT, () => {
-    console.log(`Servidor de lifebit corriendo en el puerto: ${PORT}`);
-})
