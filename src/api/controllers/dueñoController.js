@@ -88,7 +88,8 @@ const aprobarSolicitud = async (req, res, next) => {
 
 		// 5. Generar el token de invitación para el nuevo administrador.
 		const { tokenPlano, tokenHasheado } = tokenUtils.generaTokenRegistro();
-		const tokenExpira = new Date(Date.now + 24 * 60 * 60 * 1000); // Token válido por 24 horas.
+		const tokenExpira = new Date(Date.now() + 24 * 60 * 60 * 1000); // Token válido por 24 horas.
+		// const tokenExpira = new Date(Date.now() + 1 * 60 * 1000); // Token válido por 1 minuto.
 
 		// 6. Crear el Usuario administrador en estado 'invitado'.
 		const valoresUsuario = [
@@ -100,6 +101,7 @@ const aprobarSolicitud = async (req, res, next) => {
 			idEdificio,
 			tokenHasheado,
 			tokenExpira,
+			'administrador'
 		];
 		await cliente.query(
 			usuarioQueries.CREA_USUARIO_INVITADO,

@@ -1,10 +1,12 @@
-const db = require('../../config/db')
-const queries = require('../../queries/authQueries')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const crypto = require('crypto');
+const db = require('../../config/db');
+const queries = require('../../queries/authQueries');
+const usuarioQueries = require('../../queries/usuarioQueries');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-const AppError = require('../../utils/appError')
-const generaTokens = require('../../utils/jwtUtils')
+const AppError = require('../../utils/appError');
+const generaTokens = require('../../utils/jwtUtils');
 
 /**
  * @description Registra un nuevo usuario en el sistema (flujo tradicional).
@@ -18,7 +20,7 @@ const register = async (req, res, next) => {
 	try {
 		// Extraemos los datos del cuerpo de la petición
 		const { nombre, apellido, email, contraseña, telefono, cedula } =
-			req.body
+			req.body;
 		// Verificamos que los campos obligatorios (según la BD) estén presentes.
 		if (!nombre || !apellido || !email || !contraseña || !cedula) {
 			// Si faltan datos, pasamos un error al manejador de errores global.
@@ -29,7 +31,7 @@ const register = async (req, res, next) => {
 					'Por favor, proporcione nombre, apellido, email, cedula y contraseña',
 					400
 				)
-			)
+			);
 			// return res.status(400).json({
 			// 	error: 'Los campos nombre, apellido, email, contraseña, cédula son obligatorios.',
 			// })
@@ -49,23 +51,23 @@ const register = async (req, res, next) => {
 		// El segundo argumento es el 'cost factor' o 'salt rounds'.
 		// 'genSalt' genera una "sal" aleatoria para añadir a la contraseña antes de hashearla.
 		// El número (ej. 10) es el "costo" o "rondas" del hasheo. Más alto = más seguro pero más lento. 10 es un buen balance.
-		const salt = await bcrypt.genSalt(10)
-		const passHash = await bcrypt.hash(contraseña, salt)
+		const salt = await bcrypt.genSalt(10);
+		const passHash = await bcrypt.hash(contraseña, salt);
 
 		// Guardar el usuario en la base de datos.
-		const values = [nombre, apellido, email, passHash, telefono, cedula]
+		const values = [nombre, apellido, email, passHash, telefono, cedula];
 		// desestructuro rows y lo renombro al mismo tiempo
 		const { rows: nuevoUsuario } = await db.query(
 			queries.CREA_USUARIO,
 			values
-		)
+		);
 		// Enviar respuesta exitosa.
 		// No devolvemos la contraseña hasheada.
 		res.status(201).json({
 			// 201 Created
 			message: 'Usuario registrado exitosamente.',
 			data: nuevoUsuario,
-		})
+		});
 	} catch (error) {
 		// Manejo de errores (ej. email duplicado)
 		// 23505 --> unique_violation
@@ -76,12 +78,12 @@ const register = async (req, res, next) => {
 			// })
 			return next(
 				new AppError('El correo electronico ya esta registrado', 409)
-			)
+			);
 		}
 		// Pasamos el error a nuestro manejador global.
-		next(error)
+		next(error);
 	}
-}
+};
 
 /**
  * @description Autentica a un usuario y devuelve tokens de acceso.
@@ -93,17 +95,17 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
 	try {
 		// 1. Extraer email y contraseña del cuerpo de la petición.
-		const { email, contraseña } = req.body
+		const { email, contraseña } = req.body;
 		// 2. Validar que los datos de entrada existen.
 		if (!email || !contraseña) {
 			throw new AppError(
 				'Por favor, proporciones un email y una contraseña',
 				400
-			)
+			);
 		}
 		// 3. Verificamos si existe el usuario
-		const result = await db.query(queries.USUARIO_EXISTE, [email])
-		const usuario = result.rows[0]
+		const result = await db.query(queries.USUARIO_EXISTE, [email]);
+		const usuario = result.rows[0];
 		// console.log(usuario.email);
 		// console.log(usuario.contraseña)
 
@@ -113,7 +115,7 @@ const login = async (req, res, next) => {
 			!(await bcrypt.compare(contraseña, usuario.contraseña))
 		) {
 			// El mensaje de error es genérico. Esto previene "ataques de enumeración de usuarios"
-			throw new AppError('Email o contraseña invalida', 401)
+			throw new AppError('Email o contraseña invalida', 401);
 		}
 
 		// 5. Si el usuario y la contraseña son correctos, generamos los tokens.
@@ -123,11 +125,11 @@ const login = async (req, res, next) => {
 			id: usuario.id,
 			rol: usuario.rol,
 			id_edificio: usuario.id_edificio_actual, // Incluimos el ID del edificio en el token
-		}
-		const tokens = generaTokens(payload)
+		};
+		const tokens = generaTokens(payload);
 		// 6. Enviar los tokens y la información del usuario en la respuesta.
 		// Eliminamos la contraseña del objeto de usuario antes de enviarlo.
-		usuario.contraseña = undefined
+		usuario.contraseña = undefined;
 
 		res.status(200).json({
 			success: true,
@@ -136,11 +138,11 @@ const login = async (req, res, next) => {
 			data: {
 				usuario,
 			},
-		})
+		});
 	} catch (error) {
-		next(error)
+		next(error);
 	}
-}
+};
 
 /**
  * @description Obtiene el perfil del usuario actualmente autenticado.
@@ -157,8 +159,8 @@ const obtenerPerfil = (req, res, next) => {
 		data: {
 			user: req.user,
 		},
-	})
-}
+	});
+};
 
 /**
  * @description Genera un nuevo accessToken a partir de un refreshToken válido.
@@ -169,37 +171,37 @@ const refreshToken = async (req, res, next) => {
 	try {
 		// 1. Obtener el refreshToken del cuerpo de la petición.
 		// El frontend lo enviará en el cuerpo del JSON.
-		const { refreshToken } = req.body
+		const { refreshToken } = req.body;
 		if (!refreshToken) {
 			return next(
 				new AppError('No se proporcionó un token de refresco', 400)
-			)
+			);
 		}
 		// 2. Verificar el refreshToken usando el SECRETO DE REFRESCO.
 		// Usamos un bloque try...catch aquí dentro específicamente para la verificación,
 		// porque el error que lanza 'verify' es el que nos interesa atrapar.
-		let decoded
+		let decoded;
 		try {
-			decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
+			decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 		} catch (error) {
 			return next(
 				new AppError(
 					'Token de refresco invalido o expirado. Por favor, inicie sesion de nuevo',
 					403
 				)
-			) // 403 forbidden
+			); // 403 forbidden
 		}
 		// 3. (Opcional pero recomendado) Verificar que el usuario del token aún existe y está activo.
 		// Esto previene que un refreshToken siga siendo válido para un usuario que ha sido eliminado o suspendido.
-		const result = await db.query(queries.USUARIO_TOKEN, [decoded.id])
-		const usuario = result.rows[0]
+		const result = await db.query(queries.USUARIO_TOKEN, [decoded.id]);
+		const usuario = result.rows[0];
 		if (!usuario || usuario.estado !== 'activo') {
 			return next(
 				new AppError(
 					'No se puede refrescar el token para este usuario',
 					403
 				)
-			)
+			);
 		}
 		// 4. Si todo es correcto, generamos un NUEVO accessToken.
 		// Creamos el payload con la información fresca del usuario.
@@ -207,26 +209,87 @@ const refreshToken = async (req, res, next) => {
 			id: usuario.id,
 			// rol: usuario.rol,
 			// id_edificio: user.id_edificio_actual, // Incluimos el ID del edificio en el token
-		}
+		};
 		// ¡Ojo! Solo generamos un nuevo accessToken. El refreshToken original sigue siendo válido
 		// hasta que expire. No necesitamos emitir uno nuevo en cada refresco.
 		const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_EXPIRES_IN,
-		})
+		});
 		// 5. Enviamos el nuevo accessToken.
 		res.status(200).json({
 			success: true,
 			message: 'Token de acceso renovado exitosamente',
 			accessToken,
-		})
+		});
 	} catch (error) {
-		next(error)
+		next(error);
 	}
-}
+};
+
+/**
+ * @description Finaliza el registro de un usuario invitado usando un token.
+ * @route POST /api/auth/finalizar-registro
+ */
+const finalizarRegistro = async (req, res, next) => {
+	try {
+		const { token, contraseña } = req.body;
+
+		if (!token || !contraseña) {
+			throw new AppError(
+				'Por favor, proporcione el token y su nueva contraseña.',
+				400
+			);
+		}
+
+		// Hasheamos el token recibido del cliente para buscarlo en la BD.
+		const tokenHasheado = crypto
+			.createHash('sha256')
+			.update(token)
+			.digest('hex');
+
+		// --- BLOQUE DE DEPURACIÓN ---
+		console.log('--- Depurando finalizarRegistro ---');
+		console.log('Token recibido (plano):', token);
+		console.log('Token hasheado (para la búsqueda):', tokenHasheado);
+		console.log('Query a ejecutar:',usuarioQueries.OBTENER_INVITADO_POR_TOKEN);
+		console.log('---------------------------------');
+
+		// Buscamos al usuario invitado.
+		const result = await db.query(
+			usuarioQueries.OBTENER_INVITADO_POR_TOKEN,
+			[tokenHasheado]
+		);
+		const usuario = result.rows[0];
+		if (!usuario) {
+			throw new AppError(
+				'El token es invalido, ha espirado o ya fue utilizado',
+				400
+			);
+		}
+
+		// Hasheamos la nueva contraseña.
+		const salt = await bcrypt.genSalt(10);
+		const contraseñaHasheada = await bcrypt.hash(contraseña, salt);
+
+		// Activamos al usuario en la BD.
+		await db.query(usuarioQueries.ACTIVAR_USUARIO, [
+			contraseñaHasheada,
+			usuario.id,
+		]);
+
+		res.status(200).json({
+			success: true,
+			message: 'Tu cuenta ha sido activada. Ahora puedes iniciar sesion.',
+		});
+	} catch (error) {
+		next(error);
+	}
+};
 
 module.exports = {
 	register,
 	login,
 	obtenerPerfil,
 	refreshToken,
-}
+	finalizarRegistro,
+};

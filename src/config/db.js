@@ -46,6 +46,7 @@ pool.on('error', (err, client) => {
 });
 
 
+
 // 6. Exportamos un objeto que contiene un método 'query'.
 // Esto es un patrón de diseño llamado "Fachada" (Facade).
 // En lugar de que cada parte de nuestra app importe y use 'pool' directamente,

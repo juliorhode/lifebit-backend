@@ -36,7 +36,7 @@ const protegeRuta = async (req, res, next) => {
 		// desestructuro rows y lo renombro
 		const results = await db.query(queries.USUARIO_TOKEN, [decoded.id])
 		const usuario = results.rows[0]
-		console.log(usuario.estado)
+		
 
 		if (!usuario) {
 			throw new AppError(
