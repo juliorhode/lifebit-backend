@@ -19,4 +19,5 @@ const generaTokens = (payload) => {
 	// 3. Devolvemos ambos tokens.
 	return { accessToken, refreshToken }
 }
+
 module.exports = generaTokens

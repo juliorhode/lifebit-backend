@@ -21,12 +21,10 @@ const protegeRuta = async (req, res, next) => {
 			token = req.headers.authorization.split(' ')[1]
 		}
 		if (!token) {
-			return next(
-				new AppError(
+			throw new AppError(
 					'No estas autenticado. Por favor inicia sesion para obtener acceso',
 					401
 				)
-			)
 		}
 		// 2. Verificar la validez del token.
 		// 'jwt.verify' decodifica el token. Si es inválido (firma incorrecta o expirado),
@@ -41,19 +39,15 @@ const protegeRuta = async (req, res, next) => {
 		console.log(usuario.estado)
 
 		if (!usuario) {
-			return next(
-				new AppError(
+			throw new AppError(
 					'El usuario perteneciente a este token, ya no existe',
 					401
 				)
-			)
 		}
 		// 4. Verificar si el usuario está 'activo'.
 		// Podríamos tener usuarios 'suspendidos' o 'invitados' que no deberían poder acceder.
 		if (usuario.estado !== 'activo') {
-			return next(
-				new AppError('Este usuario esta inactivo o suspendido', 403)
-			) // 403 Forbidden
+			throw new AppError('Este usuario esta inactivo o suspendido', 403) // 403 Forbidden
 		}
 		// 5. ¡ACCESO CONCEDIDO!
 		// Adjuntamos el objeto del usuario (sin la contraseña) al objeto de la petición (req).
@@ -114,7 +108,7 @@ const verificaRol = (...rolesPermitidos) => {
 			// Es diferente de 401 Unauthorized (no estás autenticado).
 			return next(
 				new AppError(
-					`Acceso denegado. Tu rol ('${rolUsuario}') no tiene permiso para acceder a este recurso.`,
+					`Acceso denegado. Tu rol ('${rolUsuario}') no tiene permiso para acceder a este recurso. Se requiere el rol ${rolesPermitidos.join(' o ')}`,
 					403
 				)
 			)

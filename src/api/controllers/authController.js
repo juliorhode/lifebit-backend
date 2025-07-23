@@ -55,7 +55,10 @@ const register = async (req, res, next) => {
 		// Guardar el usuario en la base de datos.
 		const values = [nombre, apellido, email, passHash, telefono, cedula]
 		// desestructuro rows y lo renombro al mismo tiempo
-		const { rows: nuevoUsuario } = await db.query(queries.CREA_USUARIO, values)
+		const { rows: nuevoUsuario } = await db.query(
+			queries.CREA_USUARIO,
+			values
+		)
 		// Enviar respuesta exitosa.
 		// No devolvemos la contraseña hasheada.
 		res.status(201).json({
@@ -93,11 +96,9 @@ const login = async (req, res, next) => {
 		const { email, contraseña } = req.body
 		// 2. Validar que los datos de entrada existen.
 		if (!email || !contraseña) {
-			return next(
-				new AppError(
-					'Por favor, proporciones un email y una contraseña',
-					400
-				)
+			throw new AppError(
+				'Por favor, proporciones un email y una contraseña',
+				400
 			)
 		}
 		// 3. Verificamos si existe el usuario
@@ -112,8 +113,9 @@ const login = async (req, res, next) => {
 			!(await bcrypt.compare(contraseña, usuario.contraseña))
 		) {
 			// El mensaje de error es genérico. Esto previene "ataques de enumeración de usuarios"
-			return next(new AppError('Email o contraseña invalida', 401))
+			throw new AppError('Email o contraseña invalida', 401)
 		}
+
 		// 5. Si el usuario y la contraseña son correctos, generamos los tokens.
 		// Creamos el payload para los tokens.
 		// ADR-001: Usamos el rol directamente de la tabla usuarios para el MVP.
@@ -146,17 +148,17 @@ const login = async (req, res, next) => {
  * @access Private (requiere token)
  */
 const obtenerPerfil = (req, res, next) => {
-    // Gracias a nuestro middleware 'protegerRuta', el objeto 'req'
-    // ahora contiene la información del usuario en 'req.user'.
-    // No necesitamos buscarlo en la base de datos de nuevo aquí.
-    
-    res.status(200).json({
-        success: true,
-        data: {
-            user: req.user
-        }
-    });
-};
+	// Gracias a nuestro middleware 'protegerRuta', el objeto 'req'
+	// ahora contiene la información del usuario en 'req.user'.
+	// No necesitamos buscarlo en la base de datos de nuevo aquí.
+
+	res.status(200).json({
+		success: true,
+		data: {
+			user: req.user,
+		},
+	})
+}
 
 /**
  * @description Genera un nuevo accessToken a partir de un refreshToken válido.
@@ -209,23 +211,22 @@ const refreshToken = async (req, res, next) => {
 		// ¡Ojo! Solo generamos un nuevo accessToken. El refreshToken original sigue siendo válido
 		// hasta que expire. No necesitamos emitir uno nuevo en cada refresco.
 		const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-			expiresIn: process.env.JWT_EXPIRES_IN
+			expiresIn: process.env.JWT_EXPIRES_IN,
 		})
 		// 5. Enviamos el nuevo accessToken.
 		res.status(200).json({
 			success: true,
 			message: 'Token de acceso renovado exitosamente',
-			accessToken
+			accessToken,
 		})
 	} catch (error) {
 		next(error)
 	}
 }
 
-
 module.exports = {
 	register,
 	login,
 	obtenerPerfil,
-	refreshToken
+	refreshToken,
 }

@@ -469,3 +469,145 @@ Deuda Técnica Aceptada: Esta decisión introduce deuda técnica que deberá ser
 |-|-|-|
 | Exportas un objeto con llaves: `module.exports = { funcA, funcB };`|Importas con llaves (desestructuración): `const { funcA, funcB } = require(...)` |Ideal para controladores y servicios, donde un archivo agrupa varias funciones relacionadas. |
 |Exportas una única cosa sin llaves: `module.exports = MiClase;` |Importas sin llaves: `const MiClase = require(...)` |Ideal para clases, configuraciones de DB, o un único middleware que vive en su propio archivo. |
+
+# pool.query vs pool.connect
+La librería pg nos ofrece dos formas principales de interactuar con el pool de conexiones:
+
+## pool.query(text, params) (El atajo)
+### ¿Qué hace? 
+Internamente, hace todo el trabajo por ti en una sola llamada:
+- Toma un cliente del pool (pool.connect).
+- Ejecuta la consulta con ese cliente.
+- Libera el cliente de vuelta al pool (client.release).
+- Te devuelve el resultado.
+## ¿Cuándo se usa? 
+Es perfecto para consultas únicas y aisladas. El 90% de tus operaciones de "Leer" (GET) usarán este método. No necesitas preocuparte por liberar la conexión; es automático. Por eso nuestro método db.query lo usa.
+
+## pool.connect() (El método manual para control total)
+### ¿Qué hace? 
+Te "presta" un cliente (una conexión) del pool. A partir de ese momento, tú eres responsable de esa conexión.
+### ¿Cuándo se usa? 
+Se usa exclusivamente cuando necesitas ejecutar múltiples consultas seguidas en la misma conexión. El caso de uso número uno para esto es una TRANSACCIÓN DE BASE DE DATOS.
+- Para una transacción, necesitas enviar BEGIN 
+- Luego una o más consultas INSERT/UPDATE, 
+- Finalmente un COMMIT (si todo va bien) o un ROLLBACK (si algo falla). 
+- Todas estas órdenes deben ir al mismo cliente para que la base de datos entienda que son parte de la misma transacción.
+
+**La Regla de Oro:**  
+Si usas `pool.connect()`, SIEMPRE debes llamar a `client.release()` al final (típicamente en un bloque finally) para devolver la conexión al pool. Si no lo haces, la conexión se quedará "secuestrada" y nunca volverá al pool. Si esto pasa suficientes veces, agotarás todas las conexiones del pool y tu aplicación dejará de responder a peticiones de base de datos.
+
+# Manejo de Archivos con multer
+ La especialidad de multer es manejar peticiones que vienen en formato multipart/form-data, que es el formato estándar que usan los navegadores para enviar formularios que contienen archivos.
+## Por qué: 
+Porque el middleware express.json() no está diseñado para entender el formato multipart/form-data. Sin un especialista como multer, recibiríamos los datos del archivo como un flujo binario incomprensible y tendríamos que escribir código muy complejo para procesarlo.
+## Para qué: 
+Para que en nuestro controlador, podamos acceder a los datos del formulario de texto de la manera habitual (req.body) y a los archivos subidos a través de un nuevo objeto que multer nos proporciona (req.files o req.file), de una forma simple y organizada.
+## Cómo: 
+Lo primero es instalarlo. Luego, crearemos un archivo de configuración donde definiremos cómo queremos que multer maneje los archivos. En nuestro caso, le diremos que los procese en memoria (sin guardarlos en el disco temporalmente), ya que nuestra estrategia es el almacenamiento local definitivo.
+## Cuándo: 
+Lo aplicaremos como un middleware únicamente en la ruta específica que deba aceptar archivos, en este caso, la ruta para crear una nueva solicitud de servicio. No se usa en rutas que solo manejan JSON.
+## Instalación de multer
+`npm install multer`
+## multer.diskStorage
+Es un "motor de almacenamiento" que viene con multer. Le instruye a multer para que guarde los archivos directamente en el disco duro de nuestro servidor.  
+Le proporcionamos dos funciones:
+- destination: Esta función le dice a multer en qué carpeta guardar el archivo. Podemos incluso usar lógica para cambiar la carpeta dependiendo del tipo de archivo.
+- filename: Esta función le dice a multer qué nombre darle al archivo. Es crucial cambiar el nombre del archivo para evitar colisiones (dos usuarios subiendo un comprobante.pdf) y para añadirle información útil, como la fecha.
+
+## Manejo de archivos con multer (los más comunes)
+- .single('nombreDelCampo'): Para subir un solo archivo.
+- .array('nombreDelCampo', maxCantidad): Para subir múltiples archivos bajo el mismo nombre de campo.
+- .fields([{ name: 'campo1' }, { name: 'campo2' }]): El que usaremos. Es perfecto para cuando tienes diferentes campos de archivo en el mismo formulario (en nuestro caso, archivo_cedula y documento_condominio).
+
+# Envío de Emails (Nodemailer)
+Es una librería para conectarnos a un servidor de correo (en nuestro caso, el de Gmail para desarrollo) y enviar emails programáticamente.
+
+## Instalacion
+`npm install nodemailer`
+
+## Nodemailer y Transporters
+En Nodemailer, un "transportador" es un objeto que sabe cómo hablar con un servidor de correo específico (como el de Gmail, Outlook, etc.). Lo configuras una sola vez con el método de conexión (el host, el puerto) y las credenciales de autenticación (usuario, contraseña).
+
+# Contraseña de Aplicación en Google
+Es una capa de seguridad en la cuenta de Google que requiere verificar la identidad con un segundo método (como un código a tu teléfono) además de tu contraseña. Google solo permite crear Contraseñas de Aplicación a las cuentas que tienen activada la Verificación en Dos Pasos. Es una medida para asegurar que solo el dueño legítimo de la cuenta pueda autorizar a aplicaciones externas.
+
+## Crear la Contraseña de Aplicación
+- Ve a la página de tu Cuenta de Google: myaccount.google.com
+- En el menú de la izquierda, haz clic en "Seguridad".
+- Dentro de la sección "Cómo acceder a Google", ahora que la verificación en dos pasos está activa, debería aparecer una nueva opción llamada "Contraseñas de aplicaciones". Haz clic en ella.
+- Google podría pedirte que inicies sesión de nuevo para verificar tu identidad.
+- Verás una pantalla que dice "Contraseñas de aplicaciones".
+- En el menú desplegable "Seleccionar aplicación", elige "Otra (nombre personalizado)".
+- En el cuadro de texto que aparece, escribe un nombre descriptivo que te ayude a recordar para qué es esta contraseña. Por ejemplo: "LifeBit Backend (Desarrollo)".
+- Haz clic en el botón "GENERAR".
+- ¡Este es el momento clave! Google te mostrará una ventana emergente con un fondo amarillo. Dentro, verás una contraseña de 16 letras, sin espacios.
+`![alt text](https://i.stack.imgur.com/b9n2b.png)`
+### Acción Inmediata:
+- COPIA esta contraseña de 16 letras inmediatamente.
+- PÉGALA en tu archivo .env en la variable EMAIL_APP_PASSWORD.
+- NO CIERRES LA VENTANA DE GOOGLE AÚN.
+- Guardado: Una vez que la hayas copiado y pegado de forma segura, haz clic en "HECHO" en la ventana de Google.
+  NOTA: la contraseña la va entregar google de esta forma: xxxx yyyy zzzz wwww
+  Hay que eliminiar los espacion y dejarla de esta manera: xxxxyyyyzzzzwwww
+
+# crypto y Separación de Tokens
+crypto, es un módulo nativo de Node.js que proporciona herramientas criptográficas. Lo usaremos para generar una secuencia de bytes verdaderamente aleatoria, que es la base de un token seguro.
+
+## Analogía: 
+Si Math.random() es como tirar un dado de 6 caras (predecible hasta cierto punto), crypto.randomBytes() es como usar un generador de números aleatorios cuántico. Es impredecible y seguro para propósitos de seguridad.
+
+## ¿Por qué generamos dos versiones del token (plano y hasheado)?
+- El token en texto plano (ej. a1b2c3d4...) es el que se envía al usuario en el email. Es como la contraseña de un solo uso.
+- El token hasheado (ej. SHA256('a1b2c3d4...')) es el que se guarda en la base de datos, en la columna token_registro. Es como el hash de la contraseña.
+
+Cuando el usuario hace clic en el enlace, nos devuelve el token en texto plano. Nosotros lo hasheamos y buscamos ese hash en la base de datos.
+
+## ¿Por qué es importante? 
+Si un atacante lograra acceder a nuestra base de datos, solo vería los hashes de los tokens de registro. No podría usar esos hashes para construir un enlace de invitación válido y secuestrar una cuenta que aún no ha sido activada. Se aplica el mismo principio de seguridad que con las contraseñas.
+
+# El Principio de Responsabilidad Única (SRP)
+El "Principio de Responsabilidad Única" (la 'S' en los principios SOLID) establece que un módulo o una clase debe tener una, y solo una, razón para cambiar.
+
+## Archivo jwtUtils.js
+### ¿Cuál es su responsabilidad? 
+Su única responsabilidad es manejar JSON Web Tokens (JWT).
+### ¿Qué son los JWT? 
+Son tokens de autenticación y sesión. Son tokens de larga duración (en el caso del refresh token), reutilizables (el access token se usa en cada petición), y contienen información pública (payload). Siguen un estándar específico (RFC 7519).
+### ¿Cuándo cambiaría este archivo?
+- Si decidimos cambiar la librería jsonwebtoken por otra.
+- Si queremos cambiar la forma en que se construye el payload (ej. añadir más campos).
+- Si cambia el estándar JWT.
+## Archivo tokenUtils.js 
+### ¿Cuál es su responsabilidad? 
+Su única responsabilidad es manejar tokens opacos de un solo uso.
+### ¿Qué son estos tokens? 
+Son tokens para procesos transitorios como la verificación de email, la invitación de usuarios o el reseteo de contraseña. Son de corta duración, de un solo uso, y no contienen información pública. Son simplemente una cadena de caracteres aleatoria y segura.
+### ¿Cuándo cambiaría este archivo?
+- Si decidimos cambiar el algoritmo de generación de aleatoriedad (ej. de crypto.randomBytes a otra cosa).
+- Si decidimos cambiar el algoritmo de hash (ej. de SHA256 a SHA512).
+## La Diferencia Fundamental:
+Aunque ambos se llaman "tokens", sirven a propósitos fundamentalmente diferentes y tienen ciclos de vida y propiedades de seguridad completamente distintos.  
+
+- JWT -> Sesión de Usuario (¿Quién eres y qué puedes hacer ahora?)  
+- Token Opaco -> Verificación de Acción (¿Tienes permiso para realizar esta acción única e irrepetible?)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Nota para puebas
+Para probar un odulo en el cual no se haya especificado internamente la carga de `require('dotenv').config(...) `, lo podemos hacer indicandole a NodeJs con un flag `-r` o `--require` de la siguiente forma:
+
+Ejemplo con mailer.js:
+
+`node -r dotenv/config src/config/mailer.js `
+
+`-r dotenv/config`: Le dice a Node: "Oye, antes de que ejecutes cualquier cosa, primero carga y ejecuta el script config de la librería dotenv". Este script está diseñado específicamente para leer tu archivo .env de la raíz del proyecto y poblar process.env.

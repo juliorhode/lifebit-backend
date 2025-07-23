@@ -1,12 +1,11 @@
 # Ignorar la carpeta de dependencias de Node.js
 node_modules/
-
 # Ignorar el archivo de variables de entorno
 .env
-
+# Carpeta para archivos subidos
+/uploads/
 # Archivos de log
 *.log
-
 # Archivos de sistema operativo
 .DS_Store
 Thumbs.db

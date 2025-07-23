@@ -1,4 +1,4 @@
-// por defecto el estado inicial sería 'invitado'.
+// estos son los estados de un usuario: 'invitado', 'activo', 'suspendido' (por defecto es 'invitado')
 // RETURNING nos devuelve los datos clave del usuario recién creado para confirmar el éxito.
 const CREA_USUARIO = `
   insert into usuarios (nombre, apellido, email, contraseña, telefono, cedula) 
@@ -12,10 +12,12 @@ const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefon
 // ADR-001: Traemos el rol y el id_edificio directamente de la tabla usuarios.
 const USUARIO_TOKEN = `select id, nombre, email, estado, rol, id_edificio_actual from usuarios where id = $1`
 
-
+// Actualizar el estao del usuario a activo al hacer login por primera vez
+const LOGIN_USUARIO = `UPDATE usuarios SET estado = 'activo' WHERE id = $1`
 // Exportamos la consulta corregida.
 module.exports = {
   CREA_USUARIO,
   USUARIO_EXISTE,
-  USUARIO_TOKEN
+  USUARIO_TOKEN,
+  LOGIN_USUARIO
 }

@@ -9,7 +9,30 @@ DROP TABLE IF EXISTS archivos CASCADE;
 DROP TABLE IF EXISTS usuarios CASCADE;
 DROP TABLE IF EXISTS reglas CASCADE;
 DROP TABLE IF EXISTS auditoria CASCADE;
-
+DROP TABLE IF EXISTS aplicacion_pagos CASCADE;
+DROP TABLE IF EXISTS pagos CASCADE;
+DROP TABLE IF EXISTS detalles_recibo CASCADE;
+DROP TABLE IF EXISTS recibos_unidad CASCADE;
+DROP TABLE IF EXISTS recibos_maestro CASCADE;
+DROP TABLE IF EXISTS gastos CASCADE;
+DROP TABLE IF EXISTS multas CASCADE;
+DROP TABLE IF EXISTS tasas_cambio CASCADE;
+DROP TABLE IF EXISTS cuentas_bancarias CASCADE;
+DROP TABLE IF EXISTS reservas CASCADE;
+DROP TABLE IF EXISTS areas_comunes CASCADE;
+DROP TABLE IF EXISTS recursos_asignados CASCADE;
+DROP TABLE IF EXISTS recursos_edificio CASCADE;
+DROP TABLE IF EXISTS movimientos_contables CASCADE;
+DROP TABLE IF EXISTS asientos_contables CASCADE;
+DROP TABLE IF EXISTS plan_de_cuentas CASCADE;
+DROP TABLE IF EXISTS respuestas_consulta CASCADE;
+DROP TABLE IF EXISTS opciones_consulta CASCADE;
+DROP TABLE IF EXISTS consultas_populares CASCADE;
+DROP TABLE IF EXISTS discusiones_respuestas CASCADE;
+DROP TABLE IF EXISTS discusiones_hilos CASCADE;
+DROP TABLE IF EXISTS noticias CASCADE;
+DROP TABLE IF EXISTS incidencias CASCADE;
+DROP TABLE IF EXISTS cartas CASCADE;
 -- -----------------------------------------------------------------------------
 -- Tabla: usuarios
 -- -----------------------------------------------------------------------------
@@ -25,6 +48,7 @@ CREATE TABLE usuarios (
     google_id VARCHAR(255) UNIQUE,
     estado VARCHAR(50) NOT NULL DEFAULT 'invitado' CHECK (estado IN ('invitado', 'activo', 'suspendido')),
     token_registro VARCHAR(255),
+    token_registro_expira VARCHAR(255),
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -46,9 +70,10 @@ COMMENT ON TABLE licencias IS 'Catálogo de los PLANES DE SERVICIO (Básico, Pre
 CREATE TABLE contratos (
   id SERIAL PRIMARY KEY,
   id_licencia INTEGER NOT NULL REFERENCES licencias(id),
-  fecha_inicio DATE NOT NULL,
-  fecha_vencimiento DATE NOT NULL,
-  estado VARCHAR(50) NOT NULL DEFAULT 'activo' CHECK (estado IN ('solicitud', 'activo', 'moroso', 'vencido', 'cancelado')),
+  fecha_inicio DATE, -- Ahora es opcional, se establece al primer pago.
+  fecha_vencimiento DATE, -- También opcional.
+  fecha_fin_prueba DATE, -- NUEVA COLUMNA.
+  estado VARCHAR(50) NOT NULL DEFAULT 'en_prueba' CHECK (estado IN ('en_prueba', 'activo', 'moroso', 'vencido', 'cancelado')), -- este es el estado del contrato
   monto_mensual NUMERIC(12, 2) NOT NULL
 );
 COMMENT ON TABLE contratos IS 'Registra el CONTRATO de servicio activo entre LifeBit y un Edificio, definiendo su duración y costo.';
@@ -66,6 +91,22 @@ CREATE TABLE edificios (
 );
 COMMENT ON TABLE edificios IS 'Representa cada CONDOMINIO o propiedad gestionada. Es el cliente principal del SaaS.';
 
+
+-- -----------------------------------------------------------------------------
+-- ADR-001: Modelo de Roles y Afiliaciones para el MVP
+-- -----------------------------------------------------------------------------
+-- Añadimos la columna 'rol' con un valor por defecto seguro.
+ALTER TABLE usuarios
+ADD COLUMN rol VARCHAR(50) NOT NULL DEFAULT 'residente';
+
+-- Añadimos la columna que vinculará a un usuario con su edificio principal para el MVP.
+-- La hacemos NULABLE porque un dueño_app no pertenece a ningún edificio.
+ALTER TABLE usuarios
+ADD COLUMN id_edificio_actual INTEGER REFERENCES edificios(id) ON DELETE SET NULL;
+
+-- Documentamos las columnas para nuestro yo del futuro
+COMMENT ON COLUMN usuarios.rol IS 'ADR-001: Rol simplificado para V1. A ser migrado a tabla "afiliaciones" en V2.';
+COMMENT ON COLUMN usuarios.id_edificio_actual IS 'ADR-001: ID del edificio principal del usuario para V1. A ser migrado a tabla "afiliaciones" en V2.';
 -- -----------------------------------------------------------------------------
 -- Tabla: unidades
 -- -----------------------------------------------------------------------------
@@ -104,7 +145,7 @@ CREATE TABLE archivos (
   url_recurso VARCHAR(255) NOT NULL UNIQUE,
   mime_type VARCHAR(100) NOT NULL,
   tamaño_bytes INTEGER NOT NULL,
-  id_usuario_subio INTEGER NOT NULL REFERENCES usuarios(id),
+  id_usuario_subio INTEGER REFERENCES usuarios(id),
   fecha_subida TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 COMMENT ON TABLE archivos IS 'Repositorio central polimórfico para los metadatos de TODOS los archivos subidos al sistema.';
@@ -115,6 +156,7 @@ COMMENT ON TABLE archivos IS 'Repositorio central polimórfico para los metadato
 CREATE TABLE solicitudes_servicio (
   id SERIAL PRIMARY KEY,
   nombre_solicitante VARCHAR(255) NOT NULL,
+  apellido_solicitante VARCHAR(255) NOT NULL,
   email_solicitante VARCHAR(255) NOT NULL,
   telefono_solicitante VARCHAR(50),
   cedula_solicitante VARCHAR(20),
@@ -163,25 +205,6 @@ COMMENT ON TABLE auditoria IS 'Registro inmutable de acciones de escritura en la
 -- || Este lote establece el sistema de partida doble y las tablas              ||
 -- || operativas para la facturación y gestión de pagos.                        ||
 -- =================================================================================
-
--- Sentencia para eliminar las tablas si ya existen, en el orden correcto de dependencias.
-DROP TABLE IF EXISTS aplicacion_pagos CASCADE;
-DROP TABLE IF EXISTS pagos CASCADE;
-DROP TABLE IF EXISTS detalles_recibo CASCADE;
-DROP TABLE IF EXISTS recibos_unidad CASCADE;
-DROP TABLE IF EXISTS recibos_maestro CASCADE;
-DROP TABLE IF EXISTS gastos CASCADE;
-DROP TABLE IF EXISTS multas CASCADE;
-DROP TABLE IF EXISTS tasas_cambio CASCADE;
-DROP TABLE IF EXISTS cuentas_bancarias CASCADE;
-DROP TABLE IF EXISTS reservas CASCADE;
-DROP TABLE IF EXISTS areas_comunes CASCADE;
-DROP TABLE IF EXISTS recursos_asignados CASCADE;
-DROP TABLE IF EXISTS recursos_edificio CASCADE;
-DROP TABLE IF EXISTS movimientos_contables CASCADE;
-DROP TABLE IF EXISTS asientos_contables CASCADE;
-DROP TABLE IF EXISTS plan_de_cuentas CASCADE;
-
 
 -- -----------------------------------------------------------------------------
 -- Tabla 11: plan_de_cuentas
@@ -408,17 +431,6 @@ COMMENT ON TABLE recursos_asignados IS 'Registro de la ASIGNACIÓN de un recurso
 -- || sistemas de soporte y gestión de documentos.                              ||
 -- =================================================================================
 
--- Sentencia para eliminar las tablas si ya existen, en el orden correcto de dependencias.
-DROP TABLE IF EXISTS respuestas_consulta CASCADE;
-DROP TABLE IF EXISTS opciones_consulta CASCADE;
-DROP TABLE IF EXISTS consultas_populares CASCADE;
-DROP TABLE IF EXISTS discusiones_respuestas CASCADE;
-DROP TABLE IF EXISTS discusiones_hilos CASCADE;
-DROP TABLE IF EXISTS noticias CASCADE;
-DROP TABLE IF EXISTS incidencias CASCADE;
-DROP TABLE IF EXISTS cartas CASCADE;
-
-
 -- -----------------------------------------------------------------------------
 -- Tabla 26: noticias
 -- Almacena el contenido de las NOTICIAS, ya sean globales o específicas de un condominio.
@@ -538,51 +550,7 @@ CREATE TABLE cartas (
 COMMENT ON TABLE cartas IS 'Registro de las solicitudes y la emisión de DOCUMENTOS formales (ej. cartas de solvencia).';
 
 
--- -----------------------------------------------------------------------------
--- ADR-001: Modelo de Roles y Afiliaciones para el MVP
--- -----------------------------------------------------------------------------
--- Añadimos la columna 'rol' con un valor por defecto seguro.
-ALTER TABLE usuarios
-ADD COLUMN rol VARCHAR(50) NOT NULL DEFAULT 'residente';
-
--- Añadimos la columna que vinculará a un usuario con su edificio principal para el MVP.
--- La hacemos NULABLE porque un dueño_app no pertenece a ningún edificio.
-ALTER TABLE usuarios
-ADD COLUMN id_edificio_actual INTEGER REFERENCES edificios(id) ON DELETE SET NULL;
-
--- Documentamos las columnas para nuestro yo del futuro
-COMMENT ON COLUMN usuarios.rol IS 'ADR-001: Rol simplificado para V1. A ser migrado a tabla "afiliaciones" en V2.';
-COMMENT ON COLUMN usuarios.id_edificio_actual IS 'ADR-001: ID del edificio principal del usuario para V1. A ser migrado a tabla "afiliaciones" en V2.';
-
--- Le damos el rol de 'dueño_app' a nuestro usuario principal para poder probar.
--- Reemplaza con tu email.
-UPDATE usuarios SET rol = 'dueño_app' WHERE email = 'juliorhode@gmail.com';
-
-select * from usuarios where email='juliorhode@gmail.com';
-
--- ver la informacion de una tabla
-SELECT table_catalog , column_name, column_default, is_nullable, data_type
-FROM information_schema.columns
-WHERE table_name = 'usuarios';
-
-DROP DATABASE IF EXISTS lifebit_dev;
-commit;
-CREATE DATABASE lifebit_dev;
-
--- verificar las conexiones
-SELECT * FROM pg_stat_activity;
-
--- expulsar la conexion
-SELECT pg_terminate_backend(112966);
-SELECT pg_terminate_backend(112969);
-SELECT pg_terminate_backend(112972);
-SELECT pg_terminate_backend(112934);
 
 
-DELETE FROM contratos WHERE id_licencia IN (SELECT id FROM licencias);
-TRUNCATE TABLE licencias RESTART IDENTITY;
 
-TRUNCATE TABLE licencias RESTART IDENTITY CASCADE;
--- TRUNCATE TABLE licencias borra todas las filas de la tabla
--- RESTART IDENTITY reinicia los contadores de las columnas SERIAL
--- CASCADE elimina las filas de las tablas que dependen de la tabla licencias
+
