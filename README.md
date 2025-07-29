@@ -613,9 +613,119 @@ Imagina que tienes que enviar 100 invitaciones personalizadas. En lugar de escri
 {U} : Número con 2 dígitos (con cero a la izquierda). Ejemplo: 01, 02, 03
 {l} : Letra del alfabeto (a=1, b=2...). Ejemplo: a, b, c
 
+Sistema de Placeholders:
+Piso: {p}, {P}, {L}, {l_p}
+Unidad: {u}, {U}, {l}, {L_u}
 
+1) 1A, 1B, 2A, 2B... (Piso + Letra de Unidad en Mayúscula)
+Patrón: {p}{L_u}
 
+2) 0101, 0102, 0201, 0202... (Piso de 2 dígitos + Unidad de 2 dígitos)
+Patrón: {P}{U}
 
+3) 01-01, 01-02, ... 19-01 (Piso de 2 dígitos - Unidad de 2 dígitos)
+Patrón: {P}-{U}
+
+4) A-01, A-02, ..., A-19 (Letra de Edificio - Apartamento)
+Análisis: Este es interesante. La letra 'A' no cambia, parece ser una constante que el usuario escribe, no una letra generada por el número del piso.
+Patrón: A-{U}
+
+5) Torre A 01-01, Torre A 01-02, ... Torre A 19-01 (Texto fijo + Piso - Unidad)
+Análisis: Similar al anterior. "Torre A " es un texto fijo.
+Patrón: Torre A {P}-{U}
+
+6) A1-01, A1-02, ... A5-01 (Texto fijo + Piso - Unidad)
+Análisis: "A" es el nombre de la torre.
+Patrón: A{p}-{U}
+
+7) 01-A1, 01-A2, 02-B1, 02-B2, ... 05-E1 (Piso - Letra de Piso + Número de Unidad)
+Análisis: Este es el más complejo hasta ahora. Parece que la letra (A, B, C...) depende del piso, y luego se le añade el número de la unidad.
+Patrón: {P}-{L}{u}
+Simulación (Piso 2, Unidad 2):
+{P} -> 02
+- -> -
+{L} -> B (la segunda letra, para el segundo piso)
+{u} -> 2
+
+8) 01-A1, 01-B1, 01-C1, ... 05-A1 (Piso - Letra de Unidad + Número Fijo)
+Análisis: "01-A1", "01-B1". Aquí el número del piso (01) es constante, y la letra (A, B, C) cambia. Esto indica que la letra representa a la unidad. El "1" al final parece ser un número fijo.
+Patrón: {P}-{L_u}1
+Simulación (Piso 1, Unidad 3):
+{P} -> 01
+- -> -
+{L_u} -> C (la tercera letra, para la tercera unidad)
+1 -> 1
+
+9) A01-01, A01-02, ... E01-01 (Letra de Piso + Piso - Unidad)
+Análisis: Una combinación de varios elementos.
+Patrón: {L}{P}-{U}
+Simulación (Piso 2, Unidad 1):
+{L} -> B
+{P} -> 02
+- -> -
+{U} -> 01
+
+# Generador de Unidades
+
+El sistema LifeBit incluye una potente herramienta para la generación masiva de unidades (apartamentos, locales, etc.) de un edificio. Esto permite a los administradores configurar la estructura completa de su condominio en segundos, sin importar cuán compleja o irregular sea su nomenclatura.
+
+La herramienta funciona a través del endpoint `POST /api/admin/unidades/generar-flexible` y se basa en un sistema de "placeholders" que se insertan en un patrón de texto.
+
+## Guía de Placeholders
+
+Para usar el generador, se debe proporcionar un **"Patrón de Nomenclatura"**. Este patrón es un texto que puede contener los siguientes códigos especiales (placeholders), los cuales serán reemplazados automáticamente por el sistema.
+
+### Tabla de Placeholders Disponibles
+
+| Variable   | Placeholder | Descripción                         | Ejemplo (si Piso=3, Unidad=7) |
+| :--------- | :---------- | :---------------------------------- | :---------------------------- |
+| **Piso**   | `{p}`       | Número del piso (simple)            | `3`                           |
+|            | `{P}`       | Número del piso (2 dígitos)         | `03`                          |
+|            | `{L}`       | Letra del piso (MAYÚSCULA, A=1)     | `C`                           |
+|            | `{l_p}`     | Letra del piso (minúscula, a=1)     | `c`                           |
+| **Unidad** | `{u}`       | Número de la unidad (simple)        | `7`                           |
+|            | `{U}`       | Número de la unidad (2 dígitos)     | `07`                          |
+|            | `{l}`       | Letra de la unidad (minúscula, a=1) | `g`                           |
+|            | `{L_u}`     | Letra de la unidad (MAYÚSCULA, A=1) | `G`                           |
+
+---
+
+### Casos de Uso Prácticos
+
+Aquí tienes una guía de cómo construir patrones para nomenclaturas comunes y complejas.
+
+| Resultado Deseado       | Patrón a Utilizar | Explicación                                              |
+| :---------------------- | :---------------- | :------------------------------------------------------- |
+| `19-02`                 | `{p}-{U}`         | (Piso simple) - (Unidad con 2 dígitos)                   |
+| `1A, 1B, 2A, 2B`        | `{p}{L_u}`        | (Piso simple) (Letra de Unidad MAYÚSCULA)                |
+| `0101, 0102, 0201`      | `{P}{U}`          | (Piso con 2 dígitos) (Unidad con 2 dígitos)              |
+| `A-01, B-01, C-01`      | `{L}-{U}`         | (Letra de Piso MAYÚSCULA) - (Unidad con 2 dígitos)       |
+| `A-1, A-2` (Texto Fijo) | `A-{u}`           | (Texto "A-") (Unidad simple)                             |
+| `Torre A 01-01`         | `Torre A {P}-{U}` | (Texto "Torre A ") (Piso 2 dígitos) - (Unidad 2 dígitos) |
+| `Torre A 01-01`         | `A-{P}-{U}`       | (Texto "A-") (Piso 2 dígitos) - (Unidad 2 dígitos)       |
+| `01-A1, 01-B1, 02-A1`   | `{P}-{L_u}1`      | (Piso 2 dígitos) - (Letra Unidad MAYÚSCULA) (Texto "1")  |
+| `A01-01, B02-01`        | `{L}{P}-{U}`      | (Letra Piso)(Piso 2 dígitos)-(Unidad 2 dígitos)          |
+
+---
+
+### Ejemplo de Petición a la API
+
+Para generar las unidades de un edificio de 20 pisos donde la mayoría tiene 4 apartamentos, pero los pisos 19 y 20 son diferentes, se enviaría el siguiente `body` en un `POST` a `/api/admin/unidades/generar-flexible`:
+
+```json
+{
+  "patronNombre": "{p}-{U}",
+  "alicuotaPorDefecto": 1.5,
+  "configuracionGeneral": {
+    "totalPisos": 20,
+    "unidadesPorDefecto": 4
+  },
+  "excepciones": [
+    { "piso": 19, "cantidad": 2 },
+    { "piso": 20, "cantidad": 1 }
+  ]
+}
+```
 
 
 
