@@ -12,6 +12,7 @@
   "author": "Julio Rhode",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
@@ -19,7 +20,8 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.5",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "pg-format": "^1.0.4"
   },
   "devDependencies": {
     "eslint": "^9.30.1",

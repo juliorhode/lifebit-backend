@@ -591,6 +591,28 @@ Aunque ambos se llaman "tokens", sirven a propósitos fundamentalmente diferente
 - JWT -> Sesión de Usuario (¿Quién eres y qué puedes hacer ahora?)  
 - Token Opaco -> Verificación de Acción (¿Tienes permiso para realizar esta acción única e irrepetible?)
 
+# pg-format
+Es una pequeña pero muy poderosa librería que nos ayuda a formatear consultas SQL de forma segura, especialmente cuando necesitamos insertar múltiples filas de datos a la vez.
+
+## ¿Por qué?
+Construir a mano una consulta INSERT con cientos de valores (ej. VALUES ($1, $2), ($3, $4), ...) es tedioso y muy propenso a errores. Más importante aún, es un riesgo de seguridad si no se "escapan" los valores correctamente. pg-format automatiza este proceso de forma segura.
+
+### Analogía: 
+Imagina que tienes que enviar 100 invitaciones personalizadas. En lugar de escribir cada una a mano (riesgo de errores), usas una plantilla de "combinar correspondencia" en un procesador de texto. Le das la plantilla (INSERT INTO unidades...) y la lista de invitados en una hoja de cálculo (nuestro array de unidades), y la herramienta (pg-format) genera las 100 invitaciones perfectamente formateadas y sin errores.
+
+## Instalación
+`npm install pg-format`
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -611,3 +633,42 @@ Ejemplo con mailer.js:
 `node -r dotenv/config src/config/mailer.js `
 
 `-r dotenv/config`: Le dice a Node: "Oye, antes de que ejecutes cualquier cosa, primero carga y ejecuta el script config de la librería dotenv". Este script está diseñado específicamente para leer tu archivo .env de la raíz del proyecto y poblar process.env.
+
+# NodeJs y NVM
+nvm permite instalar, desinstalar y cambiar entre diferentes versiones de Node.js con un simple comando, y se encarga de configurar todos los permisos y rutas correctamente.
+
+Vamos a instalar nvm y usarlo para gestionar Node. Esto resolverá el problema de raíz.
+
+Paso 1: Instalar nvm
+  Abre una nueva terminal y ejecuta uno de los siguientes comandos. curl es más común, pero si no lo tienes, wget también funciona.
+
+Usando curl:
+
+`curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash`
+
+O usando wget:
+
+`wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash`
+
+Paso 2: Activar nvm
+  Cierra tu terminal actual y abre una nueva. Esto es importante para que los cambios que hizo el instalador se carguen.
+
+Verifica que se instaló correctamente ejecutando:
+
+`command -v nvm`
+
+Si el comando devuelve nvm, ¡perfecto! Si no, puede que necesites ejecutar source ~/.bashrc o source ~/.zshrc (dependiendo de tu shell).
+
+Paso 3: Instalar y Usar una Versión Estable de Node.js
+  Ahora, con nvm, vamos a instalar la versión LTS (Long-Term Support) de Node, que es la más estable para producción y desarrollo.
+
+`nvm install --lts`
+
+Una vez que termine, le diremos a nvm que use esa versión:
+
+`nvm use --lts`
+
+Verifica que ahora tu sistema está usando la versión de Node gestionada por nvm:
+
+`node -v`
+`npm -v`

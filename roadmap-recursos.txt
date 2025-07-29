@@ -1,0 +1,47 @@
+Roadmap Definitivo: Epopeya de Configuración del Edificio
+Objetivo General de la Epopeya: Proporcionar al Administrador un conjunto de herramientas potentes y flexibles para modelar la estructura completa de su edificio en LifeBit, desde las unidades habitacionales hasta el último control remoto, preparándolo para la gestión de residentes.
+Misión 4: Gestión de Unidades Habitacionales (El Corazón del Edificio)
+Objetivo: Permitir al administrador generar TODAS las unidades habitacionales (apartamentos, locales) de su edificio de forma masiva y flexible, estableciendo la base para el cobro de cuotas y la asignación de residentes.
+Pasos Clave de Implementación:
+Instalación: Añadir la librería pg-format para facilitar las inserciones masivas (npm install pg-format).
+Queries (unidadQueries.js): Crear un nuevo archivo de queries que contendrá una única pero potente consulta, INSERT_UNIDADES_MASIVO, diseñada para insertar múltiples filas a la vez.
+Controlador (unidadController.js):
+Crear un nuevo archivo de controlador.
+Implementar la función principal: generarUnidadesMasivamente.
+Lógica:
+Validará la entrada del req.body (el patronNombre y el array de configuracionPisos).
+Contendrá el "motor de generación": un bucle que iterará sobre la configuracionPisos y, anidado, otro bucle que iterará según la cantidad de cada piso.
+Dentro de los bucles, construirá el numero_unidad final reemplazando los placeholders ({p}, {P}, {u}, {U}, {L}, {l}).
+Usará pg-format para construir la query de inserción masiva de forma segura.
+Rutas (unidadRoutes.js):
+Crear un nuevo archivo de rutas.
+Definir el endpoint: POST /api/admin/unidades/generar-flexible.
+Asegurar el enrutador completo con router.use(protegeRuta, verificaRol('administrador')).
+Registro (app.js): Añadir app.use('/api/admin/unidades', unidadRoutes).
+Misión 5: Gestión de Recursos Asignables e Inventario
+Objetivo: Permitir al administrador crear el inventario completo de recursos secundarios del edificio (estacionamientos, depósitos, controles, llaves), listos para ser asignados.
+Pasos Clave de Implementación:
+Sub-Misión 5.1: CRUD de Tipos de Recurso
+Lógica: Implementar un CRUD simple para la tabla recursos_edificio. Esto permite al admin definir categorías como "Estacionamiento", "Depósito", "Control Remoto".
+Archivos: recursoController.js, recursoRoutes.js, recursoQueries.js.
+Endpoints: POST, GET, PATCH, DELETE en /api/admin/tipos-recurso.
+Sub-Misión 5.2: Generador de Recursos Secuenciales
+Lógica: Implementar la función generarRecursosMasivamente en recursoController.js. Servirá para recursos con patrones simples (ej. Estacionamientos E-1 a E-120).
+Endpoint: POST /api/admin/recursos/generar-secuencial.
+Sub-Misión 5.3: Carga de Inventario por CSV
+Instalación: Añadir la librería xlsx (npm install xlsx).
+Middleware: Añadir una nueva configuración a uploadMiddleware.js (o un nuevo archivo) para manejar archivos .xlsx y .csv.
+Lógica: Implementar la función cargarInventarioDesdeArchivo en recursoController.js. Parseará el archivo y realizará una inserción masiva en recursos_asignados. Ideal para activos con códigos complejos (controles, llaves).
+Endpoint: POST /api/admin/recursos/cargar-inventario.
+Misión 6: Asignación de Recursos a Unidades
+Objetivo: Proporcionar los endpoints necesarios para vincular los recursos creados en la Misión 5 con las unidades creadas en la Misión 4.
+Pasos Clave de Implementación:
+Queries (recursoQueries.js): Añadir consultas para:
+ASIGNAR_RECURSO_A_UNIDAD (un UPDATE que setea id_unidad).
+DESASIGNAR_RECURSO (un UPDATE que setea id_unidad a NULL).
+GET_RECURSOS_POR_UNIDAD.
+GET_RECURSOS_DISPONIBLES (donde id_unidad es NULL).
+Controlador (recursoController.js): Implementar las funciones asignarRecurso, desasignarRecurso, obtenerRecursosDeUnidad, etc.
+Rutas (recursoRoutes.js): Añadir los endpoints correspondientes, por ejemplo:
+PATCH /api/admin/recursos-asignados/:id/asignar (recibirá el id_unidad en el body).
+PATCH /api/admin/recursos-asignados/:id/desasignar.

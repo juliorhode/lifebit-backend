@@ -115,7 +115,8 @@ const aprobarSolicitud = async (req, res, next) => {
 		await emailService.enviarEmailInvitacion(
 			solicitud.email_solicitante,
 			solicitud.nombre_solicitante,
-			tokenPlano
+			tokenPlano,
+			solicitud.nombre_edificio
 		);
 		// 9. Si todo fue exitoso, confirmar la transacción.
 		await cliente.query('COMMIT');

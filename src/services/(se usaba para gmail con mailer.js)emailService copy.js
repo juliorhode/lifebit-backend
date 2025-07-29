@@ -1,13 +1,11 @@
-const axios = require('axios');
-const AppError = require('../utils/appError');
-
+const nodemailer = require('nodemailer')
+const trasnporter = require('../config/mailer')
 
 /**
- * @description Envía un email de invitación usando la API HTTP de Resend.
+ * @description Envía un email de invitación para finalizar el registro.
  * @param {string} destinatarioEmail - La dirección de email del nuevo usuario.
  * @param {string} destinatarioNombre - El nombre del nuevo usuario.
  * @param {string} token - El token de registro de un solo uso.
- * @param {string} nombreEdificio - El nombre del edificio.
  */
 const enviarEmailInvitacion = async (
 	destinatarioEmail,
@@ -16,25 +14,14 @@ const enviarEmailInvitacion = async (
 	nombreEdificio
 ) => {
 	try {
-		const apiKey = process.env.RESEND_API_KEY;
-
-		if (!apiKey) {
-			console.error(
-				'Error de configuración: La clave RESEND_API_KEY no está definida en .env'
-			);
-			throw new AppError(
-				'El servicio de email no está configurado correctamente.',
-				500
-			);
-		}
 		const urlRegistro = `${process.env.URL_BASE}:${process.env.PORT}/finalizar-registro?token=${token}`;
 		const añoActual = new Date().getFullYear();
 		// Definimos el contenido del email.
-		const payload = {
+		const opcionesEmail = {
 			// remitente
 			from: `"El Equipo de LifeBit" <onboarding@resend.dev>`,
 			// destinatario
-			to: [destinatarioEmail],
+			to: destinatarioEmail,
 			// asunto
 			subject: `✅ ¡Tu acceso a LifeBit para ${nombreEdificio} ha sido aprobado!`,
 			html: `
@@ -75,26 +62,20 @@ const enviarEmailInvitacion = async (
                 </div>
             `,
 		};
-
-		// Realizamos la petición POST a la API de Resend.
-		await axios.post('https://api.resend.com/emails', payload, {
-			headers: {
-				Authorization: `Bearer ${apiKey}`,
-			},
-		});
+		// Usamos nuestro transportador para enviar el email.
+		// La función 'sendMail' devuelve una promesa, por lo que usamos 'await'.
+		await trasnporter.sendMail(opcionesEmail);
 		console.log(
-			`✅ Email de invitación (vía Resend API) enviado exitosamente a ${destinatarioEmail}`
+			`✅ Email de invitación enviado exitosamente a ${destinatarioEmail}`
 		);
-
-
 	} catch (error) {
 		// Si el envío falla, registramos el error y lo relanzamos
 		// para que el controlador que llamó a esta función sepa que algo salió mal.
 		console.error(
-			`❌ Error al enviar email vía Resend API a ${destinatarioEmail}:`,
-			error.response ? error.response.data : error.message
+			`❌ Error al enviar el email de invitación a ${destinatarioEmail}:`,
+			error
 		);
-		throw new AppError('El email de invitación no pudo ser enviado.', 500);
+		throw new Error('El email de invitación no pudo ser enviado.');
 	}
 };
 
