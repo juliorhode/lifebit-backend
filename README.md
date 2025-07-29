@@ -603,7 +603,15 @@ Imagina que tienes que enviar 100 invitaciones personalizadas. En lugar de escri
 ## Instalación
 `npm install pg-format`
 
-
+# Placeholders Disponibles para la creacion de unidades:
+## Para el Número de Piso:
+{p} : Número simple. Ejemplo: 1, 2, ..., 19
+{P} : Número con 2 dígitos (con cero a la izquierda). Ejemplo: 01, 02, ..., 19
+{L} : Letra del alfabeto (A=1, B=2...). Ejemplo: A, B, ..., S
+## Para el Número de Apartamento (por piso):
+{u} : Número simple. Ejemplo: 1, 2, 3
+{U} : Número con 2 dígitos (con cero a la izquierda). Ejemplo: 01, 02, 03
+{l} : Letra del alfabeto (a=1, b=2...). Ejemplo: a, b, c
 
 
 

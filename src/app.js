@@ -8,6 +8,8 @@ const morgan = require('morgan')
 const solicitudRoutes = require('./api/routes/solicitudRoutes')
 const authRoutes = require('./api/routes/authRoutes')
 const dueñoRoutes = require('./api/routes/dueñoRoutes')
+const adminRoutes = require('./api/routes/adminRoutes')
+
 
 const app = express()
 
@@ -26,6 +28,8 @@ app.use('/api/solicitudes', solicitudRoutes)
 app.use('/api/auth', authRoutes)
 // rutas de owner
 app.use('/api/owner', dueñoRoutes)
+// rutas de admin
+app.use('/api/admin', adminRoutes)
 
 // ruta de prueba de verificacion que el servidor funciona
 app.get('/', (req, res) => {
