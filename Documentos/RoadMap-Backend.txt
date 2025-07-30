@@ -19,14 +19,14 @@
 *********************************************************************************
 
 *   `[x]` **AUTH-01:** Diseñar e implementar el modelo de datos final para `usuarios` (Decisión MVP: relación 1-a-1 con `edificios`).
-*   `[ ]` **AUTH-02:** Implementar el flujo de registro/login tradicional con `email`/`password` y hashing (`bcrypt`).
+*   `[x]` **AUTH-02:** Implementar el flujo de registro/login tradicional con `email`/`password` y hashing (`bcrypt`).
 *   `[ ]` **AUTH-03:** Configurar Passport.js e implementar el flujo de login social con Google (OAuth 2.0).
-*   `[ ]` **AUTH-04:** Implementar la generación de JSON Web Tokens (JWT) al iniciar sesión.
-*   `[ ]` **AUTH-05:** Implementar el sistema de Refresh Tokens para sesiones seguras y persistentes.
-*   `[ ]` **AUTH-06:** Crear middleware `protegerRuta` para verificar el JWT en peticiones a rutas protegidas.
-*   `[ ]` **AUTH-07:** Crear middleware `verificarRol` para autorización (RBAC) distinguiendo Dueño, Admin, Residente.
-*   `[ ]` **AUTH-08:** Implementar el flujo de "finalizar registro" con token de invitación único enviado por email.
-*   `[ ]` **AUTH-09:** Configurar un servicio de envío de emails (ej. Nodemailer).
+*   `[x]` **AUTH-04:** Implementar la generación de JSON Web Tokens (JWT) al iniciar sesión.
+*   `[x]` **AUTH-05:** Implementar el sistema de Refresh Tokens para sesiones seguras y persistentes.
+*   `[x]` **AUTH-06:** Crear middleware `protegerRuta` para verificar el JWT en peticiones a rutas protegidas.
+*   `[x]` **AUTH-07:** Crear middleware `verificarRol` para autorización (RBAC) distinguiendo Dueño, Admin, Residente.
+*   `[x]` **AUTH-08:** Implementar el flujo de "finalizar registro" con token de invitación único enviado por email.
+*   `[x]` **AUTH-09:** Configurar un servicio de envío de emails (ej. Nodemailer).
 
 ---
 
@@ -50,8 +50,8 @@
 ## Epopeya 3: Panel de Administradores de Condominio (ADMIN)
 ********************************************************************
 
-*   `[ ]` **ADMIN-01: [Módulo Registro Residentes]** - Endpoints para registro manual y carga masiva (parseo de CSV/Excel).
-*   `[ ]` **ADMIN-02: [Módulo Recursos]** - CRUD para gestionar los recursos del edificio (puestos, salones, llaves).
+*   `[ x]` **ADMIN-01: [Módulo Registro Residentes]** - Endpoints para registro manual y carga masiva (parseo de CSV/Excel).
+*   `[x]` **ADMIN-02: [Módulo Recursos]** - CRUD para gestionar los recursos del edificio (puestos, salones, llaves).
 *   `[ ]` **ADMIN-03: [Módulo Recibos]** - Endpoints para carga de gastos y generación de recibos de condominio mensuales.
 *   `[ ]` **ADMIN-04: [Módulo Pagos Residentes]** - Ver pagos reportados por residentes y gestionar el flujo de conciliación.
 *   `[ ]` **ADMIN-05: [Módulo Discusiones (Foro)]** - CRUD completo para hilos y comentarios, con capacidades de moderación.

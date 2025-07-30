@@ -1,45 +1,45 @@
 // Carga las variables de entorno desde .env
-require('dotenv').config()
-const express = require('express')
+require('dotenv').config();
+const express = require('express');
 // Importamos morgan para el logger
-const morgan = require('morgan')
+const morgan = require('morgan');
 
 /* Importar Enrutadores */
-const solicitudRoutes = require('./api/routes/solicitudRoutes')
-const authRoutes = require('./api/routes/authRoutes')
-const dueñoRoutes = require('./api/routes/dueñoRoutes')
-const adminRoutes = require('./api/routes/adminRoutes')
+const solicitudRoutes = require('./api/routes/solicitudRoutes');
+const authRoutes = require('./api/routes/authRoutes');
+const dueñoRoutes = require('./api/routes/dueñoRoutes');
+const adminRoutes = require('./api/routes/adminRoutes');
+const recursoRoutes = require('./api/routes/recursoRoutes');
 
-
-const app = express()
+const app = express();
 
 /**** Middleware para parsear cuerpos de peticion en formato JSON ****/
-app.use(express.json())
-
+app.use(express.json());
 
 // Usamos el middleware morgan.
 // 'dev' es un formato predefinido que nos da una salida concisa y coloreada
-app.use(morgan('dev'))
+app.use(morgan('dev'));
 
 /****  Enrutadores ****/
 // Ruta para el registro de nuevos usuarios
-app.use('/api/solicitudes', solicitudRoutes)
+app.use('/api/solicitudes', solicitudRoutes);
 // ruta de login
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', authRoutes);
 // rutas de owner
-app.use('/api/owner', dueñoRoutes)
+app.use('/api/owner', dueñoRoutes);
 // rutas de admin
-app.use('/api/admin', adminRoutes)
+app.use('/api/admin', adminRoutes);
+// rutas para tipo recursos
+app.use('/api/admin/recursos', recursoRoutes);
 
 // ruta de prueba de verificacion que el servidor funciona
 app.get('/', (req, res) => {
-    res.send("API de lifebit funcionando")
-})
+	res.send('API de lifebit funcionando');
+});
 
 /**** Importar manejador de errores ****/
-const errorHandler = require('./middleware/errorHandler')
+const errorHandler = require('./middleware/errorHandler');
 // Registramos el manejador de errores
-app.use(errorHandler)
+app.use(errorHandler);
 
-module.exports = app
-
+module.exports = app;

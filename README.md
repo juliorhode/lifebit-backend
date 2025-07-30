@@ -727,17 +727,98 @@ Para generar las unidades de un edificio de 20 pisos donde la mayoría tiene 4 a
 }
 ```
 
+# Cómo Adaptar el Generador a un Conjunto de Casas
+Un supuesto conjunto residencial llamado "Villa Serena" con 3 calles (Calle A, Calle B, Calle C) y 10 casas por calle.
+
+El Administrador usaría la herramienta de "Generador de Unidades" de la siguiente manera:
+
+## Opción 1: Las Calles como "Pisos"
+
+Interfaz del Generador:  
+  * cantidadPisos: 3 (Aquí, "piso" representa una "calle")
+  * unidadesPorPisoPorDefecto: 10
+  * patronNombre: Calle {L}, Casa {u}
+
+Resultado de la Generación:  
+
+Calle A, Casa 1
+Calle A, Casa 2
+...  
+Calle B, Casa 1
+...  
+Calle C, Casa 10
+...
 
 
+## Opción 2: Un solo "Piso" Lógico
+Un supuesto, que las casas están numeradas secuencialmente, pero agrupadas por manzana.  
 
+Interfaz del Generador:  
+* cantidadPisos: 1 (Todo el conjunto es un único "nivel" lógico)
+* unidadesPorPisoPorDefecto: 30 (El número total de casas)
+* patronNombre: Manzana 1, Casa {u} (Aquí el patronNombre define el contexto)  
 
+***La única limitación es la terminología en la interfaz. Un administrador de un conjunto de casas podría encontrar confuso que la herramienta le pida "Cantidad de Pisos".***
 
+## Propuesta de Mejora 
+Cuando construyamos el frontend, podemos hacer que la terminología sea personalizable.  
 
+### ADR-004: Terminología de Agrupación Flexible.
+- Decisión: En la configuración del edificio, el administrador podrá elegir la "Etiqueta del Nivel Principal" (valor por defecto: "Piso"). Podría cambiarla a "Calle", "Manzana", "Torre", etc.
+- Implementación en Frontend: La interfaz del generador mostraría dinámicamente: Cantidad de [Calles]:, y en la tabla: [Calle] 1, [Calle] 2, etc.
 
+Esto no requiere ningún cambio en el backend. El motor de generación es agnóstico a la etiqueta; solo le importan los números y el patrón.
 
+# Más Allá de GET, POST, PATCH, DELETE: Otros Métodos HTTP
+HTTP define un conjunto de "verbos" o "métodos de petición" para indicar la acción que se desea realizar sobre un recurso. Ya dominas los 4 más comunes. Aquí están los otros que preguntas:
+## PUT vs. PATCH (La Diferencia Sutil)
+### PATCH (Lo que usamos): 
+Se utiliza para aplicar una actualización parcial a un recurso. Le dices al servidor: "Quiero cambiar solamente estos campos del recurso X". Si solo envías el nombre, el tipo del recurso se queda como estaba. 
 
+Es como editar solo un par de celdas en una fila de Excel.
+### PUT: 
+Se utiliza para reemplazar un recurso por completo. Le dices al servidor: "Borra el recurso X que tienes ahora y reemplázalo con esta nueva versión completa que te estoy enviando". Si el nuevo objeto que envías no incluye el campo tipo, el tipo del recurso en la base de datos se establecería a NULL (o fallaría si es NOT NULL). 
 
+Es como borrar una fila entera de Excel y escribir una nueva en su lugar.
+### ¿Por qué preferimos PATCH? 
+Es más flexible y eficiente. Permite al frontend enviar solo los datos que han cambiado, ahorrando ancho de banda y haciendo que el código del backend sea más robusto (no tenemos que validar que todos los campos vengan en una actualización).
+## HEAD
+### ¿Qué es? 
+Es exactamente igual que un GET, pero con una diferencia crucial: el servidor NO devuelve el cuerpo (body) de la respuesta. Solo devuelve las cabeceras (headers).
+### ¿Para qué sirve? 
+Es una herramienta de optimización. Imagina que quieres saber si un archivo PDF de 500 MB ha cambiado desde la última vez que lo descargaste. En lugar de hacer un GET y descargar los 500 MB de nuevo, haces un HEAD. El servidor te responderá con las cabeceras, que incluyen información como Content-Length (el tamaño del archivo) y Last-Modified (la fecha de última modificación). Puedes comparar esta información con la que tienes y decidir si necesitas hacer el GET completo o no.
+Analogía: Es como preguntar en la biblioteca: "¿Cuántas páginas tiene el libro 'Guerra y Paz'?" (HEAD), en lugar de pedir que te traigan el libro entero para contarlas tú mismo (GET).
+## OPTIONS
+### ¿Qué es? 
+Es un método que un cliente (como un navegador) usa para preguntar al servidor qué métodos HTTP están permitidos para una URL específica.
+### ¿Para qué sirve? 
+Su uso principal está relacionado con CORS (Cross-Origin Resource Sharing). Antes de que un navegador haga una petición compleja (como PUT o DELETE) a un dominio diferente, primero envía una petición de "pre-vuelo" (preflight request) usando el método OPTIONS. El servidor responde con cabeceras especiales (Access-Control-Allow-Methods, Access-Control-Allow-Headers) que le dicen al navegador: "Para esta URL, sí permito peticiones GET, POST y DELETE, y acepto que me envíen la cabecera Authorization". Si la respuesta del OPTIONS es favorable, el navegador procede a hacer la petición real (DELETE). Si no, la bloquea.
 
+Analogía: Es como llamar a un restaurante antes de ir y preguntar: "¿Aceptan tarjetas de crédito y tienen código de vestimenta?" (OPTIONS), antes de conducir hasta allí para cenar (POST).
+## La Pestaña "Headers" en Postman
+Cuando usas la pestaña "Authorization" en Postman y seleccionas "Bearer Token", lo que Postman hace "por debajo" es añadir una cabecera a la petición.
+### ¿Qué son las Cabeceras (Headers)? 
+Son metadatos o información sobre la petición HTTP, no los datos en sí mismos (que van en el body o los params).  
+Ejemplos de Cabeceras Importantes:  
+- Authorization: La que usamos para enviar el token JWT.
+- Content-Type: Le dice al servidor en qué formato están los datos del body. Cuando envías JSON, Postman añade automáticamente la cabecera Content-Type: application/json.
+- Accept: Le dice al servidor en qué formato prefieres recibir la respuesta.
+- User-Agent: Identifica qué cliente está haciendo la petición (ej. "PostmanRuntime/7.29", "Mozilla/5.0...").
+### ¿Puedo añadirlas manualmente? 
+Sí. Si en lugar de usar la pestaña "Authorization", fueras a la pestaña "Headers" y añadieras manualmente:
+- KEY: Authorization
+- VALUE: Bearer tu_token_largo_aqui 
+   
+El resultado sería exactamente el mismo. La pestaña "Authorization" es solo una ayuda visual, un atajo que Postman nos da para una de las cabeceras más comunes.
+
+# ExcelJS
+- API Moderna: Usa promesas y async/await de forma nativa, lo que la hace muy fácil y agradable de usar en nuestro código.
+- Lectura y Escritura Avanzada: No solo lee datos, sino que puede manejar estilos, fórmulas, imágenes, etc. (aunque no lo necesitemos, habla de su potencia).
+- Streaming: Puede procesar archivos grandes sin cargarlos todos en memoria, al igual que csv-parser.
+- Mantenimiento Activo: Es un proyecto muy popular y activamente mantenido, lo que generalmente significa que las vulnerabilidades de seguridad se abordan más rápidamente.
+- Debilidad: Puede ser ligeramente más lenta que xlsx para archivos gigantescos, pero para nuestro caso de uso (cientos o miles de filas), la diferencia es imperceptible.
+## Instalacion
+`npm install exceljs`
 
 
 
