@@ -1,6 +1,7 @@
 const express = require('express');
 const recursoController = require('../controllers/recursoController');
 const { protegeRuta, verificaRol } = require('../../middleware/authMiddleware');
+const xlsxUploadMiddleware = require('../../middleware/xlsxUploadMiddleware');
 
 const router = express.Router();
 
@@ -37,6 +38,19 @@ router
 router.post(
 	'/generar-secuencial',
 	recursoController.generarRecursosSecuencialmente
+);
+
+// --- RUTA PARA CARGA MASIVA ---
+
+// La ruta completa será: POST /api/admin/recursos/cargar-inventario
+// 1. Primero se ejecuta el middleware 'uploadSpreadsheet'.
+// 2. Si el archivo es válido, 'uploadSpreadsheet' lo adjunta a 'req.file'.
+// 3. Finalmente, se ejecuta el controlador 'cargaInventarioArchivo'.
+// POST /api/admin/recursos/cargar-inventario
+router.post(
+	'/cargar-inventario',
+	xlsxUploadMiddleware,
+	recursoController.cargaInventarioArchivo
 );
 
 module.exports = router;

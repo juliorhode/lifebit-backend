@@ -1,4 +1,7 @@
-// src/queries/unidadQueries.js
+// Obtiene todas las unidades de un edificio específico.
+const OBTENER_UNIDADES_POR_EDIFICIO = `
+    SELECT id, numero_unidad FROM unidades WHERE id_edificio = $1;
+`;
 
 // Esta query es una plantilla. Usaremos pg-format para inyectar los valores.
 // %L se asegura de que los valores se escapen correctamente para prevenir inyección SQL.
@@ -7,4 +10,5 @@ const INSERT_UNIDADES_MASIVO = `INSERT INTO unidades (id_edificio, numero_unidad
 
 module.exports = {
 	INSERT_UNIDADES_MASIVO,
+	OBTENER_UNIDADES_POR_EDIFICIO,
 };

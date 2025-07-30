@@ -1,7 +1,9 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/appError');
 const recursoQueries = require('../../queries/recursoQueries');
+const unidadQueries = require('../../queries/unidadQueries');
 const format = require('pg-format');
+const ExcelJS = require('exceljs');
 
 
 /**
@@ -171,27 +173,32 @@ const actualizarTipoRecurso = async (req, res, next) => {
  * @access Private (administrador)
  */
 const eliminarTipoRecurso = async (req, res, next) => {
-    try {
+	try {
 		// Obtenemos el ID del recurso a actualizar desde los parámetros de la URL.
 		const { id: idRecurso } = req.params;
 		// Obtenemos el ID del edificio desde el usuario autenticado para seguridad.
 		const idEdificio = req.user.id_edificio_actual;
 		// Ejecutamos la query de eliminación.
-		const {rows: [recursoEliminado]} = await db.query(recursoQueries.BORRA_TIPO_RECURSO, [idRecurso,idEdificio]);
+		const {
+			rows: [recursoEliminado],
+		} = await db.query(recursoQueries.BORRA_TIPO_RECURSO, [
+			idRecurso,
+			idEdificio,
+		]);
 		// Si no se devolvió ninguna fila, el recurso no existía.
-        if (!recursoEliminado) {
+		if (!recursoEliminado) {
 			throw new AppError(
 				`No se encontró un tipo de recurso con ID ${idRecurso} para este edificio.`,
 				404
 			);
-        }
-        // El código de estado 204 (No Content) es el estándar para una eliminación
-        // exitosa, pero un 200 con mensaje también es común y a veces más claro.
-        res.status(200).json({
+		}
+		// El código de estado 204 (No Content) es el estándar para una eliminación
+		// exitosa, pero un 200 con mensaje también es común y a veces más claro.
+		res.status(200).json({
 			success: true,
 			message: `El tipo de recurso ${recursoEliminado.nombre} ha sido eliminado exitosamente.`,
-        });
-    } catch (error) {
+		});
+	} catch (error) {
 		// Manejamos un error de integridad referencial.
 		// Si se intenta borrar un tipo de recurso que ya está en uso por 'recursos_asignados',
 		// la base de datos lanzará un error 23503.
@@ -213,7 +220,7 @@ const eliminarTipoRecurso = async (req, res, next) => {
  * @access Private (administrador)
  */
 const generarRecursosSecuencialmente = async (req, res, next) => {
-    try {
+	try {
 		// --- 1. EXTRACCIÓN Y VALIDACIÓN DE DATOS ---
 		const { idTipoRecurso, cantidad, patronNombre, numeroInicio } =
 			req.body;
@@ -249,15 +256,17 @@ const generarRecursosSecuencialmente = async (req, res, next) => {
 				null, // Inicialmente, los recursos no están asignados a ninguna unidad.
 			]);
 		}
-        // --- 3. INSERCIÓN MASIVA ---
-        const sql = format(recursoQueries.CREA_RECURSOS_MASIVO, recursosParaInsertar);
-        await db.query(sql);
-        // --- 4. RESPUESTA EXITOSA ---
-        res.status(201).json({
-            success: true,
-            message: `${totalAGenerar} instancias de recurso han sido creados exitosamente.`,
-        })
-
+		// --- 3. INSERCIÓN MASIVA ---
+		const sql = format(
+			recursoQueries.CREA_RECURSOS_MASIVO,
+			recursosParaInsertar
+		);
+		await db.query(sql);
+		// --- 4. RESPUESTA EXITOSA ---
+		res.status(201).json({
+			success: true,
+			message: `${totalAGenerar} instancias de recurso han sido creados exitosamente.`,
+		});
 	} catch (error) {
 		// Manejamos el error si se intenta crear recursos para un tipo que no existe.
 		if (error.code === '23503') {
@@ -271,13 +280,174 @@ const generarRecursosSecuencialmente = async (req, res, next) => {
 		}
 		next(error);
 	}
-}
+};
+
+// ExcelJS puede leer un archivo de Excel desde varias fuentes. Como nuestro middleware usará memoryStorage, el archivo subido estará disponible en req.file.buffer. Un "buffer" es simplemente la representación cruda del archivo en la memoria.
+// Le pasaremos este buffer a ExcelJS. Él lo abrirá, nos dará acceso a las hojas de cálculo (worksheets), y podremos iterar sobre cada fila (row) para extraer los datos de las celdas.
+/**
+ * @description Carga un inventario de recursos y opcionalmente los asigna a unidades desde un archivo Excel.
+ * @route POST /api/admin/recursos/cargar-inventario
+ * @access Private (administrador)
+ */
+const cargaInventarioArchivo = async (req, res, next) => {
+	// Obtenemos un cliente para envolver toda la operación en una transacción.
+	const cliente = await db.getClient();
+	try {
+		// --- 1. VALIDACIÓN PRELIMINAR ---
+		if (!req.file) {
+			throw new AppError('No se proporcionó ningún archivo Excel.', 400);
+		}
+
+		// Iniciamos la transacción para garantizar la integridad de los datos.
+		await cliente.query('BEGIN');
+
+		// --- 2. PREPARACIÓN DE DATOS (BÚSQUEDAS PREVIAS) ---
+		const idEdificio = req.user.id_edificio_actual;
+
+		// Obtenemos todos los 'Tipos de Recurso' del edificio para validación.
+		// Los guardamos en un Map para una búsqueda ultra-rápida (O(1)).
+		const { rows: tiposExistentes } = await cliente.query(
+			recursoQueries.OBTENER_TIPOS_RECURSO_POR_EDIFICIO,
+			[idEdificio]
+		);
+		const tiposMap = new Map(
+			tiposExistentes.map((t) => [t.nombre.toLowerCase(), t.id])
+		);
+
+		// Obtenemos todas las 'Unidades' del edificio para la asignación.
+		// Las guardamos en un Map usando el nombre de la unidad como clave.
+		const { rows: unidadesExistentes } = await cliente.query(
+			unidadQueries.OBTENER_UNIDADES_POR_EDIFICIO,
+			[idEdificio]
+		);
+		const unidadesMap = new Map(
+			unidadesExistentes.map((u) => [u.numero_unidad.toLowerCase(), u.id])
+		);
+
+		// Obtenemos todos los identificadores de recursos que YA existen en el edificio.
+		const { rows: recursosExistentes } = await db.query(
+			recursoQueries.OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO,
+			[idEdificio]
+		);
+		const recursosExistentesSet = new Set(
+			recursosExistentes.map((r) => r.identificador_unico)
+		);
+
+		// --- 3. LECTURA Y PROCESAMIENTO DEL ARCHIVO EXCEL ---
+		const workbook = new ExcelJS.Workbook();
+		await workbook.xlsx.load(req.file.buffer);
+		const worksheet = workbook.getWorksheet(1);
+		if (!worksheet) {
+			throw new AppError(
+				'El archivo Excel está vacío o no contiene hojas de cálculo.',
+				400
+			);
+		}
+
+		const recursosParaInsertar = [];
+		let errorDeValidacion = null;
+		// NO actualizaremos, solo insertaremos los que no existen.
+		// La actualización masiva la dejaremos para Misión 6 (Asignación).
+
+
+		// Iteramos sobre cada fila del Excel, saltando la primera (encabezado).
+		worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber > 1 && !errorDeValidacion) {
+				// Leemos los valores de las 3 columnas, convirtiéndolos a string y quitando espacios.
+				const nombreRecurso = (row.getCell(1).value || '')
+					.toString()
+					.trim()
+					.toLowerCase();
+				const identificador = (row.getCell(2).value || '')
+					.toString()
+					.trim();
+				const nombrePropietario = (row.getCell(3).value || '')
+					.toString()
+					.trim()
+					.toLowerCase();
+
+				// Si la fila está esencialmente vacía, la saltamos.
+				if (!nombreRecurso || !identificador) return;
+
+				if (recursosExistentesSet.has(identificador)) {
+					console.log(
+						`Recurso '${identificador}' ya existe. Omitiendo.`
+					);
+					return; 
+				}
+
+				// VALIDACIÓN 1: ¿Existe el tipo de recurso?
+				const idTipoRecurso = tiposMap.get(nombreRecurso);
+				if (!idTipoRecurso) {
+					errorDeValidacion = `Error en la fila ${rowNumber}: El tipo de recurso "${row.getCell(1).value}" no existe.`;
+					return;
+				}
+
+				// VALIDACIÓN 2: ¿Existe la unidad propietaria (si se proporcionó)?
+				let idUnidad = null;
+				if (nombrePropietario) {
+					idUnidad = unidadesMap.get(nombrePropietario);
+					if (!idUnidad) {
+						errorDeValidacion = `Error en la fila ${rowNumber}: La unidad "${row.getCell(3).value}" no existe en este edificio.`;
+						return;
+					}
+				}
+
+				// Si todas las validaciones pasan, añadimos la fila al array de inserción.
+				recursosParaInsertar.push([
+					idTipoRecurso,
+					identificador,
+					idUnidad,
+				]);
+			}
+		});
+
+		// Si encontramos un error durante la iteración, detenemos todo.
+		if (errorDeValidacion) throw new AppError(errorDeValidacion, 400);
+		if (recursosParaInsertar.length === 0)
+			throw new AppError(
+				'El archivo no contiene datos válidos para importar o ya existen en el sistema.',
+				400
+			);
+
+		// --- 4. INSERCIÓN MASIVA ---
+		const sql = format(
+			recursoQueries.CREA_RECURSOS_MASIVO,
+			recursosParaInsertar
+		);
+		await cliente.query(sql);
+
+		// Si todo fue exitoso, confirmamos la transacción.
+		await cliente.query('COMMIT');
+
+		res.status(201).json({
+			success: true,
+			message: `${recursosParaInsertar.length} nuevas instancias de recurso han sido creadas y/o asignadas exitosamente.`,
+		});
+	} catch (error) {
+		// Si cualquier error ocurre, la transacción se revierte.
+		await cliente.query('ROLLBACK');
+		if (error.code === '23505') {
+			// unique_violation
+			return next(
+				new AppError(
+					'El archivo contiene identificadores de recurso que ya existen en el sistema.',
+					409
+				)
+			);
+		}
+		next(error);
+	} finally {
+		// Siempre liberamos el cliente.
+		cliente.release();
+	}
+};
 
 module.exports = {
 	crearTipoRecurso,
 	obtenerTiposRecurso,
-    actualizarTipoRecurso,
-    eliminarTipoRecurso,
-    generarRecursosSecuencialmente
+	actualizarTipoRecurso,
+	eliminarTipoRecurso,
+	generarRecursosSecuencialmente,
+	cargaInventarioArchivo,
 };
-

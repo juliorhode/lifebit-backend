@@ -33,6 +33,12 @@ const CREA_RECURSOS_MASIVO = `
     VALUES %L;
 `;
 
+// Obtiene todos los recursos asignados de un edificio para validación.
+const OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO = `
+    SELECT id, identificador_unico FROM recursos_asignados 
+    WHERE id_recurso_edificio IN (SELECT id FROM recursos_edificio WHERE id_edificio = $1);
+`;
+
 //NOTA:
 // Todas las queries incluyen AND id_edificio = $ 
 // Esto es crucial para asegurar que un administrador del Edificio A nunca pueda ver, editar o borrar accidentalmente los tipos de recurso del Edificio B.
@@ -43,5 +49,6 @@ module.exports = {
 	CREA_TIPO_RECURSO,
 	ACTUALIZA_TIPO_RECURSO,
     BORRA_TIPO_RECURSO,
-    CREA_RECURSOS_MASIVO
+    CREA_RECURSOS_MASIVO,
+    OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO,
 };
