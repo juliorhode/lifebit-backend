@@ -39,8 +39,34 @@ const OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO = `
     WHERE id_recurso_edificio IN (SELECT id FROM recursos_edificio WHERE id_edificio = $1);
 `;
 
+// Obtiene TODOS los IDs de unidades de un edificio.
+const OBTENER_IDS_UNIDADES_POR_EDIFICIO = `
+    SELECT id FROM unidades WHERE id_edificio = $1;
+`;
+
+// Obtiene TODOS los IDs de recursos asignados de un edificio.
+const OBTENER_IDS_RECURSOS_ASIGNADOS_POR_EDIFICIO = `
+    SELECT id FROM recursos_asignados 
+    WHERE id_recurso_edificio IN (SELECT id FROM recursos_edificio WHERE id_edificio = $1);
+`;
+
+// Actualiza el id_unidad de múltiples recursos a la vez usando la sintaxis de VALUES.
+// Cuando pg-format construye la cláusula VALUES, crea una cadena de texto. Por ejemplo: VALUES ('50', '10'), ('51', NULL) PostgreSQL puede interpretar estos valores como de tipo text
+//PostgreSQL está diciendo: "Estás intentando comparar algo que es un INTEGER con algo que es un TEXT (o VARCHAR) usando el operador =". En la cláusula WHERE ra.id = v.id_recurso.
+// ra.id (de la tabla recursos_asignados) es INTEGER.
+// v.id_recurso (los valores que vienen de pg-format) está siendo interpretado como TEXT.
+const ACTUALIZA_ASIGNACIONES_MASIVO = `
+     UPDATE recursos_asignados AS ra
+    SET 
+        id_unidad = v.id_unidad_nueva::int
+    FROM 
+        (VALUES %L) AS v(id_recurso, id_unidad_nueva)
+    WHERE 
+        ra.id = v.id_recurso::int; 
+`;
+
 //NOTA:
-// Todas las queries incluyen AND id_edificio = $ 
+// Todas las queries incluyen AND id_edificio = $
 // Esto es crucial para asegurar que un administrador del Edificio A nunca pueda ver, editar o borrar accidentalmente los tipos de recurso del Edificio B.
 
 module.exports = {
@@ -48,7 +74,10 @@ module.exports = {
 	OBTENER_TIPO_RECURSO_POR_ID,
 	CREA_TIPO_RECURSO,
 	ACTUALIZA_TIPO_RECURSO,
-    BORRA_TIPO_RECURSO,
-    CREA_RECURSOS_MASIVO,
-    OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO,
+	BORRA_TIPO_RECURSO,
+	CREA_RECURSOS_MASIVO,
+	OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO,
+	OBTENER_IDS_UNIDADES_POR_EDIFICIO,
+	OBTENER_IDS_RECURSOS_ASIGNADOS_POR_EDIFICIO,
+	ACTUALIZA_ASIGNACIONES_MASIVO,
 };

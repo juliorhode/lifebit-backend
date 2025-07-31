@@ -5,7 +5,6 @@ const unidadQueries = require('../../queries/unidadQueries');
 const format = require('pg-format');
 const ExcelJS = require('exceljs');
 
-
 /**
  * @description Crea un nuevo tipo de recurso para el edificio del administrador.
  * @route POST /api/admin/recursos/tipos
@@ -329,6 +328,7 @@ const cargaInventarioArchivo = async (req, res, next) => {
 			recursoQueries.OBTENER_RECURSOS_ASIGNADOS_POR_EDIFICIO,
 			[idEdificio]
 		);
+		// El objeto Set es para crear un conjunto de identificadores únicos para una búsqueda eficiente.
 		const recursosExistentesSet = new Set(
 			recursosExistentes.map((r) => r.identificador_unico)
 		);
@@ -349,7 +349,6 @@ const cargaInventarioArchivo = async (req, res, next) => {
 		// NO actualizaremos, solo insertaremos los que no existen.
 		// La actualización masiva la dejaremos para Misión 6 (Asignación).
 
-
 		// Iteramos sobre cada fila del Excel, saltando la primera (encabezado).
 		worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber > 1 && !errorDeValidacion) {
@@ -368,12 +367,13 @@ const cargaInventarioArchivo = async (req, res, next) => {
 
 				// Si la fila está esencialmente vacía, la saltamos.
 				if (!nombreRecurso || !identificador) return;
-
+				// El método .has() verifica la existencia de un elemento. Este es mas rapido que uar includes. Devuelve un booleano que afirma si un elemento está presente con el valor dado en el objeto Set o no.
+				// Comparamos el identificador del archivo de excell con respecto a los identificadores que vienen de BD
 				if (recursosExistentesSet.has(identificador)) {
 					console.log(
 						`Recurso '${identificador}' ya existe. Omitiendo.`
 					);
-					return; 
+					return;
 				}
 
 				// VALIDACIÓN 1: ¿Existe el tipo de recurso?
@@ -422,7 +422,7 @@ const cargaInventarioArchivo = async (req, res, next) => {
 
 		res.status(201).json({
 			success: true,
-			message: `${recursosParaInsertar.length} nuevas instancias de recurso han sido creadas y/o asignadas exitosamente.`,
+			message: `${recursosParaInsertar.length} nuevos recursos han sido creados. Se omitieron ${recursosExistentesSet.size} duplicados.`,
 		});
 	} catch (error) {
 		// Si cualquier error ocurre, la transacción se revierte.
@@ -443,6 +443,98 @@ const cargaInventarioArchivo = async (req, res, next) => {
 	}
 };
 
+/**
+ * @description Asigna, reasigna o desasigna múltiples recursos a múltiples unidades en una sola operación.
+ * @route PATCH /api/admin/recursos/asignaciones
+ * @access Private (administrador)
+ */
+const actualizarAsignaciones = async (req, res, next) => {
+	// Obtenemos un cliente para la transacción.
+	const cliente = await db.getClient();
+	try {
+		// --- 1. EXTRACCIÓN Y VALIDACIÓN INICIAL DEL BODY ---
+		const { asignaciones } = req.body;
+		console.log(asignaciones);
+		
+		if (!asignaciones || !Array.isArray(asignaciones)) {
+			throw new AppError(
+				'El cuerpo de la petición debe contener un array de "asignaciones".',
+				400
+			);
+		}
+
+		// Si el array está vacío, no hay nada que hacer.
+		if (asignaciones.length === 0) {
+			return res.status(200).json({
+				success: true,
+				message: 'No se realizaron asignaciones.',
+			});
+		}
+
+		await cliente.query('BEGIN');
+		const idEdificio = req.user.id_edificio_actual;
+		// --- 2. BÚSQUEDAS PREVIAS DE SEGURIDAD ---
+		// Obtenemos todos los IDs válidos para este edificio en Sets para una búsqueda O(1).
+		const { rows: unidadesValidas } = await cliente.query(
+			recursoQueries.OBTENER_IDS_UNIDADES_POR_EDIFICIO,
+			[idEdificio]
+		);
+		const unidadesValidasSet = new Set(unidadesValidas.map((u) => u.id));
+
+		const { rows: recursosValidos } = await cliente.query(
+			recursoQueries.OBTENER_IDS_RECURSOS_ASIGNADOS_POR_EDIFICIO,
+			[idEdificio]
+		);
+		const recursosValidosSet = new Set(recursosValidos.map((r) => r.id));
+
+		// --- 3. VALIDACIÓN DE CADA ASIGNACIÓN Y PREPARACIÓN DE DATOS ---
+		const datosParaActualizar = [];
+		for (const asignacion of asignaciones) {
+			const { idRecurso, idUnidad } = asignacion;
+
+			// Validamos que el recurso a modificar pertenece al edificio del admin.
+			if (!recursosValidosSet.has(idRecurso)) {
+				throw new AppError(
+					`El recurso con ID ${idRecurso} no existe o no pertenece a tu edificio.`,
+					404
+				);
+			}
+			// Validamos que la unidad a la que se asigna (si no es null) pertenece al edificio.
+			if (idUnidad !== null && !unidadesValidasSet.has(idUnidad)) {
+				throw new AppError(
+					`La unidad con ID ${idUnidad} no existe o no pertenece a tu edificio.`,
+					404
+				);
+			}
+
+			// Si todo es válido, añadimos el par [id, nuevo_id_unidad] al lote.
+			datosParaActualizar.push([idRecurso, idUnidad]);
+			console.log("datos a actualizar",datosParaActualizar);
+			
+		}
+
+		// --- 4. EJECUCIÓN DE LA ACTUALIZACIÓN MASIVA ---
+		const sql = format(
+			recursoQueries.ACTUALIZA_ASIGNACIONES_MASIVO,
+			datosParaActualizar
+		);
+		const { rowCount } = await cliente.query(sql); // rowCount nos dirá cuántas filas fueron afectadas.
+
+		await cliente.query('COMMIT');
+
+		// --- 5. RESPUESTA EXITOSA ---
+		res.status(200).json({
+			success: true,
+			message: `Se han actualizado exitosamente ${rowCount} asignaciones de recursos.`,
+		});
+	} catch (error) {
+		await cliente.query('ROLLBACK');
+		next(error);
+	} finally {
+		cliente.release();
+	}
+};
+
 module.exports = {
 	crearTipoRecurso,
 	obtenerTiposRecurso,
@@ -450,4 +542,5 @@ module.exports = {
 	eliminarTipoRecurso,
 	generarRecursosSecuencialmente,
 	cargaInventarioArchivo,
+	actualizarAsignaciones,
 };

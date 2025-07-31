@@ -53,4 +53,12 @@ router.post(
 	recursoController.cargaInventarioArchivo
 );
 
+// --- RUTA PARA ASIGNACIÓN ---
+router.patch(
+	'/asignaciones',
+	recursoController.actualizarAsignaciones
+);
+
+
+
 module.exports = router;
