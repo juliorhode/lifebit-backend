@@ -16,8 +16,8 @@ router.post(
 	unidadController.generarUnidadesFlexible
 );
 
-// --- FUTURAS RUTAS DE ADMINISTRADOR ---
-// (Aquí irán las rutas para invitar residentes, gestionar recursos, etc.)
-// router.post('/residentes/invitar', adminController.invitarResidente);
+// Para listar todos los apartamentos cargados del edificio
+// GET /api/admin/unidades/
+router.get('/unidades', unidadController.obtenerUnidades)
 
 module.exports = router;

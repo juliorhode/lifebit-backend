@@ -127,7 +127,32 @@ const generarUnidadesFlexible = async (req, res, next) => {
     }
 };
 
+/**
+ * @description Obtiene una lista simple de todas las unidades de un edificio.
+ * @route GET /api/admin/unidades
+ * @access Private (administrador)
+ */
+const obtenerUnidades = async (req, res, next) => {
+	try {
+		const idEdificio = req.user.id_edificio_actual;
+		const { rows: unidades } = await db.query(
+			unidadQueries.OBTENER_UNIDADES_POR_EDIFICIO,
+			[idEdificio]
+		);
+
+		res.status(200).json({
+			success: true,
+			count: unidades.length,
+			data: {
+				unidades,
+			},
+		});
+	} catch (error) {
+		next(error);
+	}
+}
 module.exports = {
-    generarUnidadesFlexible,
+	generarUnidadesFlexible,
+	obtenerUnidades,
 };
 

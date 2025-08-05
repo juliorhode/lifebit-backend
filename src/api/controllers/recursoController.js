@@ -455,7 +455,7 @@ const actualizarAsignaciones = async (req, res, next) => {
 		// --- 1. EXTRACCIÓN Y VALIDACIÓN INICIAL DEL BODY ---
 		const { asignaciones } = req.body;
 		console.log(asignaciones);
-		
+
 		if (!asignaciones || !Array.isArray(asignaciones)) {
 			throw new AppError(
 				'El cuerpo de la petición debe contener un array de "asignaciones".',
@@ -509,8 +509,7 @@ const actualizarAsignaciones = async (req, res, next) => {
 
 			// Si todo es válido, añadimos el par [id, nuevo_id_unidad] al lote.
 			datosParaActualizar.push([idRecurso, idUnidad]);
-			console.log("datos a actualizar",datosParaActualizar);
-			
+			console.log('datos a actualizar', datosParaActualizar);
 		}
 
 		// --- 4. EJECUCIÓN DE LA ACTUALIZACIÓN MASIVA ---
@@ -535,6 +534,33 @@ const actualizarAsignaciones = async (req, res, next) => {
 	}
 };
 
+/**
+ * @description Obtiene todas las instancias de un tipo de recurso específico.
+ * @route GET /api/admin/recursos/por-tipo/:idTipo
+ * @access Private (administrador)
+ */
+const obtenerRecursosPorTipo = async (req, res, next) => {
+	try {
+		const { idTipo } = req.params;
+		// No necesitamos validar el idEdificio aquí porque la query ya lo hace implícitamente
+
+		const { rows: recursos } = await db.query(
+			unidadQueries.OBTENER_RECURSOS_POR_TIPO,
+			[idTipo]
+		);
+
+		res.status(200).json({
+			success: true,
+			count: recursos.length,
+			data: {
+				recursos,
+			},
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	crearTipoRecurso,
 	obtenerTiposRecurso,
@@ -543,4 +569,5 @@ module.exports = {
 	generarRecursosSecuencialmente,
 	cargaInventarioArchivo,
 	actualizarAsignaciones,
+	obtenerRecursosPorTipo,
 };

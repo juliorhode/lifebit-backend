@@ -21,19 +21,26 @@ router
 	.patch(recursoController.actualizarTipoRecurso) // PATCH /api/admin/recursos/tipos/:id
 	.delete(recursoController.eliminarTipoRecurso); // DELETE /api/admin/recursos/tipos/:id
 
-// GET /api/admin/recursos/tipos
-//router.get('/tipos', recursoController.obtenerTiposRecurso);
+router.get('/por-tipo/:idTipo', recursoController.obtenerRecursosPorTipo); // GET /api/admin/recursos/por-tipo/:idTipo
 
-// POST /api/admin/recursos/tipos
-//router.post('/tipos',recursoController.crearTipoRecurso);
 
-// PATCH /api/admin/recursos/tipos/:id
-// router.patch('/tipos/:id', recursoController.actualizarTipoRecurso);
 
-// DELETE /api/admin/recursos/tipos/:id
-// router.delete('/tipos/:id', recursoController.eliminarTipoRecurso);
+// --- VERSION VIEJA ---
+/*
+GET /api/admin/recursos/tipos
+router.get('/tipos', recursoController.obtenerTiposRecurso);
 
-// POST /api/admin/recursos/generar-secuencial;
+POST /api/admin/recursos/tipos
+router.post('/tipos',recursoController.crearTipoRecurso);
+
+PATCH /api/admin/recursos/tipos/:id
+router.patch('/tipos/:id', recursoController.actualizarTipoRecurso);
+
+DELETE /api/admin/recursos/tipos/:id
+router.delete('/tipos/:id', recursoController.eliminarTipoRecurso);
+
+POST /api/admin/recursos/generar-secuencial;
+*/
 
 router.post(
 	'/generar-secuencial',
