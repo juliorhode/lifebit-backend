@@ -1,0 +1,114 @@
+# Roadmap Maestro del Backend de LifeBit (v2.0 - Documento Vivo)
+
+# =================================================================================
+# ||                                    ESTADO                                   ||
+# =================================================================================
+# || Leyenda:                                                                    ||
+# || [x] Tarea Completada                                                        ||
+# || [~] Tarea en Progreso o Parcialmente Completada                             ||
+# || [ ] Tarea Pendiente                                                         ||
+# =================================================================================
+
+# =================================================================================
+# ||     Epopeya 0: Fundación del Proyecto (CORE)     `[COMPLETADA]`             ||
+# =================================================================================
+# || Objetivo: Establecer una base de código robusta, segura y escalable.        ||
+# ---------------------------------------------------------------------------------
+*   `[x]` **CORE-01:** Estructura de carpetas profesional y modular.
+*   `[x]` **CORE-02:** Conexión a la base de datos PostgreSQL (con pool).
+*   `[x]` **CORE-03:** Servidor Express y middlewares base (`morgan`, `express.json`).
+*   `[x]` **CORE-04:** Manejo de variables de entorno (`dotenv`).
+*   `[x]` **CORE-05:** Manejador de errores global centralizado (`errorHandler`).
+*   `[x]` **CORE-06:** Scripts de inicialización de BD (`init.js`, `setup.js`).
+
+# =================================================================================
+# ||     Epopeya 1: Autenticación y Ciclo de Vida del Usuario     `[EN PROGRESO]`  ||
+# =================================================================================
+# || Objetivo: Construir todos los mecanismos para que los usuarios puedan       ||
+# ||           entrar, salir, gestionar sus cuentas e invitar a otros.           ||
+# ---------------------------------------------------------------------------------
+*   `[x]` **AUTH-01:** Modelo de datos MVP (`rol` y `id_*_actual` en `usuarios` - ADR-001).
+*   `[x]` **AUTH-02:** Login tradicional (`POST /api/auth/login`).
+*   `[x]` **AUTH-03:** Generación de JWT (`accessToken` y `refreshToken`).
+*   `[x]` **AUTH-04:** Middlewares de seguridad (`protegeRuta` y `verificaRol`).
+*   `[x]` **AUTH-05:** Servicio de envío de emails transaccionales (`Resend`).
+*   `[x]` **AUTH-06:** Flujo de invitación con token y expiración.
+*   `[x]` **AUTH-07:** Flujo de finalización de registro (`POST /api/auth/finalizar-registro`).
+*   `[ ]` **AUTH-08:** Flujo de invitación de Residentes por el Administrador.
+    *   `[ ]` Endpoint para invitación individual.
+    *   `[ ]` Endpoint para invitación masiva por archivo.
+*   `[ ]` **AUTH-09:** CRUD completo de Residentes (Listar, Ver, Activar/Suspender).
+*   `[ ]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
+*   `[ ]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
+*   `[ ]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
+
+# =================================================================================
+# ||     Epopeya 2: Panel del Dueño (Gestión del SaaS)     `[EN PROGRESO]`         ||
+# =================================================================================
+# || Objetivo: Dar al Dueño las herramientas para gestionar el negocio.          ||
+# ---------------------------------------------------------------------------------
+*   `[x]` **OWNER-01:** Flujo de Onboarding de Clientes (Recibir, Listar y Aprobar Solicitudes).
+*   `[~]` **OWNER-02:** Gestión de Edificios (Creación implementada, pendiente Leer/Actualizar/Borrar).
+*   `[ ]` **OWNER-03:** CRUD completo para Licencias (`/api/dueño/licencias`).
+*   `[ ]` **OWNER-04:** Dashboard del Dueño (Endpoints de agregación para métricas).
+*   `[ ]` **OWNER-05:** Módulo de Noticias Globales.
+*   `[ ]` **OWNER-06:** Herramienta de Soporte Nivel 2 (SQL Runner).
+
+# =================================================================================
+# ||     Epopeya 3: Panel del Administrador (Configuración)     `[COMPLETADA]`   ||
+# =================================================================================
+# || Objetivo: Dar al Admin las herramientas para modelar su condominio.         ||
+# ---------------------------------------------------------------------------------
+*   `[x]` **ADMIN-01:** Gestión de Unidades Habitacionales (Generador Flexible Masivo).
+*   `[x]` **ADMIN-02:** Gestión de Tipos de Recurso (CRUD completo).
+*   `[x]` **ADMIN-03:** Gestión de Inventario de Recursos (Generador Secuencial y Carga por Archivo).
+*   `[x]` **ADMIN-04:** Asignación de Recursos (API Masiva para vincularlos a Unidades).
+*   `[x]` **ADMIN-05:** Endpoints de lectura para la configuración (Listar Unidades y Recursos).
+
+# =================================================================================
+# ||     Epopeya 4: El Núcleo Financiero (Admin y Residente)     `[PENDIENTE]`     ||
+# =================================================================================
+# || Objetivo: Construir el motor que gestiona las finanzas del condominio.      ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **FIN-01:** Gestión de Cuentas Bancarias del Condominio (CRUD del Admin).
+*   `[ ]` **FIN-02:** Gestión de Gastos (CRUD del Admin).
+*   `[ ]` **FIN-03:** Generación de Recibos de Condominio (El "Cerebro" del Sistema).
+*   `[ ]` **FIN-04:** Flujo de Pagos del Residente (Ver Deudas y Reportar Pagos).
+*   `[ ]` **FIN-05:** Conciliación de Pagos (Herramienta del Admin).
+*   `[ ]` **FIN-06:** Gestión de Multas (CRUD del Admin).
+*   `[ ]` **FIN-07:** Módulo Contable de Partida Doble (`plan_de_cuentas`, `asientos`, `movimientos`).
+
+# =================================================================================
+# ||     Epopeya 5: Comunidad y Participación     `[PENDIENTE]`                   ||
+# =================================================================================
+# || Objetivo: Construir las herramientas de interacción comunitaria.            ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **COM-01:** Módulo de Noticias y Anuncios del Condominio.
+*   `[ ]` **COM-02:** Foro de Discusiones (Hilos y Respuestas).
+*   `[ ]` **COM-03:** Módulo Unificado de Consultas (Encuestas, Votaciones y Elecciones).
+*   `[ ]` **COM-04:** Gestión de Áreas Comunes (CRUD del Admin).
+*   `[ ]` **COM-05:** Módulo de Reservas de Áreas Comunes (Flujo del Residente).
+
+# =================================================================================
+# ||     Epopeya 6: Soporte y Automatización     `[PENDIENTE]`                   ||
+# =================================================================================
+# || Objetivo: Implementar herramientas de soporte y el motor de automatización. ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **SUPPORT-01:** Sistema de Incidencias Jerárquico (Residente -> Admin -> Dueño).
+*   `[ ]` **SUPPORT-02:** Gestión de Cartas y Documentos (Solicitud y Emisión).
+*   `[ ]` **AUTO-01:** Motor de Reglas (CRUD y `RuleEngineService`).
+*   `[ ]` **AUTO-02:** Módulo de Auditoría (`AuditService` y registro de acciones).
+
+
+
+# =================================================================================
+# ||     Epopeya 9 (Futura): Mantenimiento y Escalabilidad     `[PENDIENTE]`     ||
+# =================================================================================
+# || Objetivo: Realizar mejoras técnicas y preparar la aplicación para el crecimiento. ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **MAINT-01 (Refactor): Migrar el Servicio de Email a Amazon SES.**
+    *   `[ ]` Obtener y configurar credenciales de AWS SES.
+    *   `[ ]` Refactorizar 'emailService.js' para usar el SDK de AWS.
+    *   `[ ]` Adaptar la construcción del 'payload' al formato requerido por SES.
+    *   `[ ]` Actualizar las variables de entorno en producción.
+*   `[ ]` **MAINT-02 (Refactor): Implementar el modelo de 'afiliaciones' (ADR-001).**

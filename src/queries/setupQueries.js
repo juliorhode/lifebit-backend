@@ -13,10 +13,10 @@ const CHECK_LICENCIAS_EXIST = `SELECT 1 FROM licencias LIMIT 1;`;
 
 // Inserta los tres planes de servicio básicos en una sola consulta.
 const INSERT_LICENCIAS_BASE = `
-    INSERT INTO licencias (nombre_plan, caracteristicas) VALUES 
-    ('Básico', '{"modulos": ["finanzas", "noticias"], "max_usuarios": 50, "motor_reglas": false}'),
-    ('Gold', '{"modulos": ["finanzas", "noticias", "foro"], "max_usuarios": 150, "motor_reglas": true}'),
-    ('Premium', '{"modulos": ["todos"], "max_usuarios": 500, "motor_reglas": true, "soporte_dedicado": true}');
+    INSERT INTO licencias (nombre_plan, precio_base, caracteristicas) VALUES 
+    ('Básico', 20.00, '{"modulos": ["finanzas", "noticias"], "max_usuarios": 50}'),
+    ('Gold', 50.00, '{"modulos": ["finanzas", "noticias", "foro"], "max_usuarios": 150}'),
+    ('Premium', 90.00, '{"modulos": ["todos"], "max_usuarios": 500, "soporte_dedicado": true}');
 `;
 
 module.exports = {

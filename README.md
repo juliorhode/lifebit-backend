@@ -833,6 +833,15 @@ Ejemplo con mailer.js:
 
 `-r dotenv/config`: Le dice a Node: "Oye, antes de que ejecutes cualquier cosa, primero carga y ejecuta el script config de la librería dotenv". Este script está diseñado específicamente para leer tu archivo .env de la raíz del proyecto y poblar process.env.
 
+## Técnica de Alias de Correo con Gmail (La Solución Ideal para Pruebas)
+Gmail (y la mayoría de los proveedores de correo modernos) ignoran cualquier cosa en una dirección de email que venga después de un signo de + y antes del @.
+### ¿Cómo funciona?
+Si el email es juliorhode@gmail.com, todos los siguientes emails llegarán a tu misma bandeja de entrada:
+juliorhode+residente1@gmail.com
+juliorhode+prueba2@gmail.com
+juliorhode+lo_que_sea@gmail.com
+
+
 # NodeJs y NVM
 nvm permite instalar, desinstalar y cambiar entre diferentes versiones de Node.js con un simple comando, y se encarga de configurar todos los permisos y rutas correctamente.
 

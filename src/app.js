@@ -9,7 +9,6 @@ const solicitudRoutes = require('./api/routes/solicitudRoutes');
 const authRoutes = require('./api/routes/authRoutes');
 const dueñoRoutes = require('./api/routes/dueñoRoutes');
 const adminRoutes = require('./api/routes/adminRoutes');
-const recursoRoutes = require('./api/routes/recursoRoutes');
 
 const app = express();
 
@@ -29,8 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/owner', dueñoRoutes);
 // rutas de admin
 app.use('/api/admin', adminRoutes);
-// rutas para tipo recursos
-app.use('/api/admin/recursos', recursoRoutes);
+
 
 // ruta de prueba de verificacion que el servidor funciona
 app.get('/', (req, res) => {

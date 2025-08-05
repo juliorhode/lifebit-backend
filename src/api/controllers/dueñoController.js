@@ -9,6 +9,7 @@ const solicitudQueries = require('../../queries/solicitudQueries');
 const contratoQueries = require('../../queries/contratoQueries');
 const edificioQueries = require('../../queries/edificioQueries');
 const usuarioQueries = require('../../queries/usuarioQueries');
+const licenciasQueries = require('../../queries/licenciasQueries');
 
 /**
  * @description Obtiene una lista de todas las solicitudes de servicio pendientes.
@@ -61,14 +62,41 @@ const aprobarSolicitud = async (req, res, next) => {
 				404
 			);
 		}
+		// --- PASO DE VERIFICACIÓN DE DUPLICADOS ---
+		const {
+			rows: [edificioExistente],
+		} = await cliente.query(
+			edificioQueries.OBTENER_EDIFICIO_POR_NOMBRE_ILIKE,
+			[solicitud.nombre_edificio]
+		);
+		if (edificioExistente) {
+			throw new AppError(
+				`Conflicto: Ya existe un edificio con un nombre similar en el sistema (Nombre: "${edificioExistente.nombre}", ID: ${edificioExistente.id}). Rechace esta solicitud y contacte al cliente.`,
+				409
+			);
+		}
+		console.log({solicitud});
+		
+		// --- OBTENER EL PRECIO DE LA LICENCIA ---
+		const {
+			rows: [licencia],
+		} = await cliente.query(licenciasQueries.OBTENER_LICENCIA_BY_ID, [
+			solicitud.id_licencia_solicitada,
+		]);
+		if (!licencia) {
+			// Esta es una validación de integridad importante.
+			throw new AppError(
+				`La licencia con ID ${solicitud.id_licencia_solicitada} solicitada no existe.`,
+				404
+			);
+		}
+
 		// 3. Crear el Contrato en periodo de prueba.
 		const fechaFinPrueba = new Date();
 		// Añadimos 30 días de prueba.
 		fechaFinPrueba.setDate(fechaFinPrueba.getDate() + 30);
 
-		// Aquí necesitaríamos el monto mensual de la licencia, por ahora usaremos un valor fijo.
-		// ADR-003: La lógica para obtener el monto de la licencia se refinará.
-		const montoFijo = 50.0;
+		const montoFijo = licencia.precio_base;
 		const contratoResult = await cliente.query(
 			contratoQueries.REGISTRA_CONTRATO_PRUEBA,
 			[solicitud.id, fechaFinPrueba, montoFijo]
@@ -101,7 +129,8 @@ const aprobarSolicitud = async (req, res, next) => {
 			idEdificio,
 			tokenHasheado,
 			tokenExpira,
-			'administrador'
+			'administrador',
+			null,
 		];
 		await cliente.query(
 			usuarioQueries.CREA_USUARIO_INVITADO,
@@ -112,9 +141,10 @@ const aprobarSolicitud = async (req, res, next) => {
 			idSolicitud,
 		]);
 		// 8. Enviar el email de invitación (solo si todo lo anterior tuvo éxito).
-		await emailService.enviarEmailInvitacion(
+		const nombreCompleto = `${solicitud.nombre_solicitante} ${solicitud.apellido_solicitante}`;
+		await emailService.enviarEmailInvitacionAdmin(
 			solicitud.email_solicitante,
-			solicitud.nombre_solicitante,
+			nombreCompleto,
 			tokenPlano,
 			solicitud.nombre_edificio
 		);

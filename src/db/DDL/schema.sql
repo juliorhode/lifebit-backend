@@ -61,6 +61,7 @@ COMMENT ON TABLE usuarios IS 'Almacena la información personal de cada PERSONA 
 CREATE TABLE licencias (
   id SERIAL PRIMARY KEY,
   nombre_plan VARCHAR(50) NOT NULL UNIQUE,
+  precio_base NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   caracteristicas JSONB
 );
 COMMENT ON TABLE licencias IS 'Catálogo de los PLANES DE SERVICIO (Básico, Premium) que ofrece LifeBit.';
@@ -105,7 +106,7 @@ ADD COLUMN rol VARCHAR(50) NOT NULL DEFAULT 'residente';
 ALTER TABLE usuarios
 ADD COLUMN id_edificio_actual INTEGER REFERENCES edificios(id) ON DELETE SET NULL;
 
--- Documentamos las columnas para nuestro yo del futuro
+-- Documentamos las columnas 
 COMMENT ON COLUMN usuarios.rol IS 'ADR-001: Rol simplificado para V1. A ser migrado a tabla "afiliaciones" en V2.';
 COMMENT ON COLUMN usuarios.id_edificio_actual IS 'ADR-001: ID del edificio principal del usuario para V1. A ser migrado a tabla "afiliaciones" en V2.';
 -- -----------------------------------------------------------------------------

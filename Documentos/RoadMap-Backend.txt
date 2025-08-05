@@ -33,7 +33,7 @@
 ## Epopeya 2: Panel de Dueños de la Aplicación (DUEÑO)
 *************************************************************
 
-*   `[x]` **DUEÑO-01: [Módulo Edificios]** - Implementar CRUD completo y filtrado para la entidad `edificios`.
+*   `[~]` **DUEÑO-01: [Módulo Edificios]** - Implementar CRUD completo y filtrado para la entidad `edificios`.
 *   `[ ]` **DUEÑO-02: [Módulo Contratos/Licencias]** - CRUD para gestionar las licencias y planes de los edificios.
 *   `[ ]` **DUEÑO-03: [Módulo Pagos de Servicio]** - Ver pagos reportados por Admins y validarlos contra estados de cuenta bancarios.
 *   `[ ]` **DUEÑO-04: [Módulo Noticias Globales]** - CRUD para crear noticias (con CKEditor) y dirigirlas a todos/grupos/un edificio.
@@ -43,14 +43,14 @@
 *   `[ ]` **DUEÑO-08: [Módulo Soporte (SQL Runner)]** - Crear endpoint ultra-seguro para ejecutar consultas `SELECT` en la BD.
 *   `[ ]` **DUEÑO-09: [Módulo CMS Landing Page]** - Endpoints CRUD para gestionar el contenido y estructura de la página principal.
 *   `[ ]` **DUEÑO-10: [Módulo Auditoría]** - Implementar un sistema de logging de acciones críticas en una tabla `auditoria`.
-*   `[ ]` **DUEÑO-11: [Módulo Solicitudes]** - Endpoint para recibir y listar las nuevas solicitudes de contratación desde la Landing Page.
+*   `[x]` **DUEÑO-11: [Módulo Solicitudes]** - Endpoint para recibir y listar las nuevas solicitudes de contratación desde la Landing Page.
 
 ---
 
 ## Epopeya 3: Panel de Administradores de Condominio (ADMIN)
 ********************************************************************
 
-*   `[ x]` **ADMIN-01: [Módulo Registro Residentes]** - Endpoints para registro manual y carga masiva (parseo de CSV/Excel).
+*   `[ ]` **ADMIN-01: [Módulo Registro Residentes]** - Endpoints para registro manual y carga masiva (parseo de CSV/Excel).
 *   `[x]` **ADMIN-02: [Módulo Recursos]** - CRUD para gestionar los recursos del edificio (puestos, salones, llaves).
 *   `[ ]` **ADMIN-03: [Módulo Recibos]** - Endpoints para carga de gastos y generación de recibos de condominio mensuales.
 *   `[ ]` **ADMIN-04: [Módulo Pagos Residentes]** - Ver pagos reportados por residentes y gestionar el flujo de conciliación.
@@ -86,15 +86,15 @@
 *   `[ ]` **AUTH-02: [DB]** - Implementar el modelo de datos para `edificios`, `unidades` y la tabla `licencias`.
 *   `[ ]` **AUTH-03: [API]** - Crear el CRUD básico para la entidad `usuarios` (protegido, solo para admins/dueños).
 *   `[ ]` **AUTH-04: [API]** - Crear el CRUD básico para la entidad `edificios`.
-*   `[ ]` **AUTH-05: [Servicio]** - Implementar `bcrypt` para el hashing de contraseñas.
-*   `[ ]` **AUTH-06: [API]** - Crear endpoint público de `Login` que verifica el hash y la existencia del usuario.
-*   `[ ]` **AUTH-07: [Servicio]** - Implementar generación y verificación de JWT + Refresh Tokens.
-*   `[ ]` **AUTH-08: [API]** - Integrar la generación de tokens en el endpoint de `Login`.
-*   `[ ]` **AUTH-09: [Middleware]** - Crear middleware `protegerRuta` para validar el JWT.
-*   `[ ]` **AUTH-10: [Middleware]** - Crear middleware `verificarRol` para proteger endpoints según el rol del usuario.
-*   `[ ]` **AUTH-11: [Servicio]** - Configurar `Nodemailer` para envío de correos.
-*   `[ ]` **AUTH-12: [API]** - Implementar el flujo completo de `Invitación` (crear usuario 'invitado' con token y enviar email).
-*   `[ ]` **AUTH-13: [API]** - Implementar el flujo de `Finalizar Registro` (validar token y permitir al usuario crear su contraseña).
+*   `[x]` **AUTH-05: [Servicio]** - Implementar `bcrypt` para el hashing de contraseñas.
+*   `[x]` **AUTH-06: [API]** - Crear endpoint público de `Login` que verifica el hash y la existencia del usuario.
+*   `[x]` **AUTH-07: [Servicio]** - Implementar generación y verificación de JWT + Refresh Tokens.
+*   `[x]` **AUTH-08: [API]** - Integrar la generación de tokens en el endpoint de `Login`.
+*   `[x]` **AUTH-09: [Middleware]** - Crear middleware `protegerRuta` para validar el JWT.
+*   `[x]` **AUTH-10: [Middleware]** - Crear middleware `verificarRol` para proteger endpoints según el rol del usuario.
+*   `[x]` **AUTH-11: [Servicio]** - Configurar `Nodemailer` para envío de correos.
+*   `[x]` **AUTH-12: [API]** - Implementar el flujo completo de `Invitación` (crear usuario 'invitado' con token y enviar email).
+*   `[x]` **AUTH-13: [API]** - Implementar el flujo de `Finalizar Registro` (validar token y permitir al usuario crear su contraseña).
 *   `[ ]` **AUTH-14: [Servicio]** - Configurar `Passport.js` para el flujo de Google OAuth 2.0.
 
 ## Epopeya 2: Flujo de Facturación y Pagos del Condominio (FINANZAS-CONDOMINIO)

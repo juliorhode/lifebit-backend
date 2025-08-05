@@ -1,15 +1,18 @@
-// Obtiene todas las unidades de un edificio específico.
+/**
+ * @description Obtiene todas las unidades de un edificio específico.
+ */
 const OBTENER_UNIDADES_POR_EDIFICIO = `
     SELECT id, numero_unidad FROM unidades WHERE id_edificio = $1;
 `;
+/**
+ * @description Esta query es una plantilla para cargar las unidades (apartamentos) de forma masiva. Usaremos pg-format para inyectar los valores. %L se asegura de que los valores se escapen correctamente para prevenir inyección SQL. Nota Técnica: La query no usa $1, $2.... Usa un placeholder %L que es específico de la librería pg-format. La librería reemplazará este %L por una larga cadena de valores formateados como ($1, $2, $3), ($4, $5, $6), ....
+ */
 
-// Esta query es una plantilla. Usaremos pg-format para inyectar los valores.
-// %L se asegura de que los valores se escapen correctamente para prevenir inyección SQL.
-// Nota Técnica: La query no usa $1, $2.... Usa un placeholder %L que es específico de la librería pg-format. La librería reemplazará este %L por una larga cadena de valores formateados como ($1, $2, $3), ($4, $5, $6), ....
 const INSERT_UNIDADES_MASIVO = `INSERT INTO unidades (id_edificio, numero_unidad, alicuota) VALUES %L;`;
 
-// Obtiene todas las instancias de un tipo de recurso específico para un edificio,
-// uniendo con la tabla de unidades para obtener el nombre del propietario.
+/**
+ * @description Obtiene todas las instancias de un tipo de recurso específico para un edificio, uniendo con la tabla de unidades para obtener el nombre del propietario.
+ */
 const OBTENER_RECURSOS_POR_TIPO = `
     SELECT 
         ra.id, 
@@ -21,8 +24,19 @@ const OBTENER_RECURSOS_POR_TIPO = `
     WHERE ra.id_recurso_edificio = $1;
 `;
 
+/**
+ * @description Obtiene una unidad por su ID, validando que pertenezca a un edificio específico.
+ * Es una query de seguridad para asegurar que un admin no pueda interactuar
+ * con unidades fuera de su propio condominio.
+ */
+const OBTENER_UNIDAD_POR_ID_Y_EDIFICIO = `
+    SELECT id, numero_unidad 
+    FROM unidades 
+    WHERE id = $1 AND id_edificio = $2;
+`;
 module.exports = {
 	INSERT_UNIDADES_MASIVO,
 	OBTENER_UNIDADES_POR_EDIFICIO,
-	OBTENER_RECURSOS_POR_TIPO,
+    OBTENER_RECURSOS_POR_TIPO,
+    OBTENER_UNIDAD_POR_ID_Y_EDIFICIO
 };
