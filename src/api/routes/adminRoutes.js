@@ -4,6 +4,7 @@ const recursoController = require('../controllers/recursoController');
 const adminController = require('../controllers/adminController');
 const xlsxUploadMiddleware = require('../../middleware/xlsxUploadMiddleware');
 const { protegeRuta, verificaRol } = require('../../middleware/authMiddleware');
+const configController = require('../controllers/configController');
 
 const router = express.Router();
 
@@ -12,6 +13,13 @@ const router = express.Router();
 // Esto garantiza que solo los administradores autenticados puedan acceder a estas funciones.
 router.use(protegeRuta, verificaRol('administrador'));
 
+// --- RUTA PARA GESTIONAR EL FLUJO DEL ASISTENTE ---
+// POST /api/admin/configuracion/avanzar-paso
+router.post(
+	'/configuracion/avanzar-paso',
+	configController.avanzarPasoConfiguracion
+);
+
 // --- Rutas de Gestión de Unidades ---
 // Para generar las unidades del edificio
 // POST /api/admin/unidades/generar-flexible
@@ -19,12 +27,12 @@ router.post(
 	'/unidades/generar-flexible',
 	unidadController.generarUnidadesFlexible
 );
-
 // Para listar todos los apartamentos cargados del edificio
 // GET /api/admin/unidades/
 router.get('/unidades', unidadController.obtenerUnidades);
 
 // --- RUTAS PARA GESTIONAR LOS *TIPOS* DE RECURSO ---
+
 router
 	.route('/recursos/tipos')
 	.post(recursoController.crearTipoRecurso) // POST /api/admin/recursos/tipos;
@@ -35,14 +43,13 @@ router
 	.patch(recursoController.actualizarTipoRecurso) // PATCH /api/admin/recursos/tipos/:id
 	.delete(recursoController.eliminarTipoRecurso); // DELETE /api/admin/recursos/tipos/:id
 
-	
-	// --- Rutas de Instancias de Recurso ---
-	// POST /api/admin/recursos/generar-secuencial
-	router.post(
-		'/recursos/generar-secuencial',
-		recursoController.generarRecursosSecuencialmente
-	);
-	
+// --- Rutas de Instancias de Recurso ---
+// POST /api/admin/recursos/generar-secuencial
+router.post(
+	'/recursos/generar-secuencial',
+	recursoController.generarRecursosSecuencialmente
+);
+
 // POST /api/admin/recursos/cargar-inventario
 // 1. Primero se ejecuta el middleware 'uploadSpreadsheet'.
 // 2. Si el archivo es válido, 'uploadSpreadsheet' lo adjunta a 'req.file'.
@@ -58,11 +65,21 @@ router.patch(
 	recursoController.actualizarAsignaciones
 );
 // GET /api/admin/recursos/por-tipo/:idTipo
-router.get('/recursos/por-tipo/:idTipo', recursoController.obtenerRecursosPorTipo);
-	
+router.get(
+	'/recursos/por-tipo/:idTipo',
+	recursoController.obtenerRecursosPorTipo
+);
+
 // --- Rutas de Gestión de Residentes ---
+// Para invitar a un residente, también se requiere que las unidades ya existan.
 // Para invitar a residentes al edificio
 // POST /api/admin/residentes/invitar
 router.post('/invitaciones/residentes', adminController.invitarResidente);
 
+// POST /api/admin/invitaciones/residentes-masivo
+router.post(
+	'/invitaciones/residentes-masivo',
+	xlsxUploadMiddleware,
+	adminController.invitarResidentesMasivo
+);
 module.exports = router;

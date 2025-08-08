@@ -34,9 +34,9 @@
 *   `[x]` **AUTH-05:** Servicio de envío de emails transaccionales (`Resend`).
 *   `[x]` **AUTH-06:** Flujo de invitación con token y expiración.
 *   `[x]` **AUTH-07:** Flujo de finalización de registro (`POST /api/auth/finalizar-registro`).
-*   `[ ]` **AUTH-08:** Flujo de invitación de Residentes por el Administrador.
-    *   `[ ]` Endpoint para invitación individual.
-    *   `[ ]` Endpoint para invitación masiva por archivo.
+*   `[~]` **AUTH-08:** Flujo de invitación de Residentes por el Administrador.
+    *   `[x]` Endpoint para invitación individual.
+    *   `[x]` Endpoint para invitación masiva por archivo.
 *   `[ ]` **AUTH-09:** CRUD completo de Residentes (Listar, Ver, Activar/Suspender).
 *   `[ ]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[ ]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
@@ -59,6 +59,7 @@
 # =================================================================================
 # || Objetivo: Dar al Admin las herramientas para modelar su condominio.         ||
 # ---------------------------------------------------------------------------------
+*   `[x]` **ADMIN-00:** Crear el mecanismo de estados que obliga al administrador a configurar su edificio en un orden lógico.
 *   `[x]` **ADMIN-01:** Gestión de Unidades Habitacionales (Generador Flexible Masivo).
 *   `[x]` **ADMIN-02:** Gestión de Tipos de Recurso (CRUD completo).
 *   `[x]` **ADMIN-03:** Gestión de Inventario de Recursos (Generador Secuencial y Carga por Archivo).

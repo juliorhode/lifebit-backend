@@ -89,10 +89,11 @@ CREATE TABLE edificios (
   direccion TEXT,
   id_contrato INTEGER NOT NULL UNIQUE REFERENCES contratos(id),
   moneda_funcional VARCHAR(3) NOT NULL DEFAULT 'USD',
+  estado_configuracion VARCHAR(50) NOT NULL DEFAULT 'paso_1_unidades',
   fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+COMMENT ON COLUMN edificios.estado_configuracion IS 'Controla el paso actual del Asistente de Configuración Inicial.';
 COMMENT ON TABLE edificios IS 'Representa cada CONDOMINIO o propiedad gestionada. Es el cliente principal del SaaS.';
-
 
 -- -----------------------------------------------------------------------------
 -- ADR-001: Modelo de Roles y Afiliaciones para el MVP
@@ -414,7 +415,8 @@ CREATE TABLE recursos_edificio (
   id SERIAL PRIMARY KEY,
   id_edificio INTEGER NOT NULL REFERENCES edificios(id) ON DELETE CASCADE,
   nombre VARCHAR(100) NOT NULL,
-  tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('asignable', 'inventario'))
+  tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('asignable', 'inventario')),
+  CONSTRAINT uq_recursos_edificio_nombre UNIQUE (id_edificio, nombre)
 );
 COMMENT ON TABLE recursos_edificio IS 'Catálogo de los TIPOS de recursos que existen en un edificio (ej. "Puesto de Estacionamiento").';
 
@@ -422,7 +424,8 @@ CREATE TABLE recursos_asignados (
   id SERIAL PRIMARY KEY,
   id_recurso_edificio INTEGER NOT NULL REFERENCES recursos_edificio(id) ON DELETE CASCADE,
   id_unidad INTEGER REFERENCES unidades(id) ON DELETE SET NULL,
-  identificador_unico VARCHAR(100) NOT NULL
+  identificador_unico VARCHAR(100) NOT NULL,
+  CONSTRAINT uq_recursos_asignados_identificador UNIQUE (id_recurso_edificio, identificador_unico)
 );
 COMMENT ON TABLE recursos_asignados IS 'Registro de la ASIGNACIÓN de un recurso específico a una unidad concreta.';
 
@@ -552,8 +555,38 @@ CREATE TABLE cartas (
 );
 COMMENT ON TABLE cartas IS 'Registro de las solicitudes y la emisión de DOCUMENTOS formales (ej. cartas de solvencia).';
 
+-- -----------------------------------------------------------------------------
+-- Tabla: cola_de_trabajos
+-- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
+-- Tabla: cola_de_trabajos
+-- -----------------------------------------------------------------------------
+CREATE TABLE cola_de_trabajos (
+  id BIGSERIAL PRIMARY KEY,
+  -- Define el tipo de tarea (ej. 'enviar_email_invitacion_residente').
+  -- Permite al 'worker' saber qué función ejecutar.
+  tipo_trabajo VARCHAR(50) NOT NULL,
+  -- Almacena todos los datos necesarios para ejecutar el trabajo en formato JSON.
+  -- JSONB es la versión binaria, más eficiente para búsquedas.
+  payload JSONB NOT NULL,
+  -- Rastrea el ciclo de vida del trabajo. Indexado para búsquedas rápidas.
+  estado VARCHAR(50) NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'procesando', 'completado', 'fallido')),
+  -- Contadores para la lógica de reintentos.
+  intentos INTEGER NOT NULL DEFAULT 0,
+  max_intentos INTEGER NOT NULL DEFAULT 3,
+  -- Almacena el mensaje de error del último intento fallido para depuración.
+  ultimo_error TEXT,
+  -- Marcas de tiempo para seguimiento y métricas.
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fecha_procesamiento TIMESTAMPTZ
+);
 
-
+-- Índices para optimizar las consultas del 'worker'.
+CREATE INDEX idx_cola_de_trabajos_estado ON cola_de_trabajos(estado);
+-- Comentarios para la documentación de la tabla.
+COMMENT ON TABLE cola_de_trabajos IS 'Cola persistente para tareas asíncronas (background jobs) como el envío de emails masivos.';
+COMMENT ON COLUMN cola_de_trabajos.payload IS 'Contiene los datos para el trabajo, ej. { "destinatarioEmail": "...", "token": "..." }';
+COMMENT ON COLUMN cola_de_trabajos.estado IS 'El estado actual del trabajo en la cola.';
 
 
 

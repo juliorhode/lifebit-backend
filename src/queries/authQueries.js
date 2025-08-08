@@ -12,7 +12,8 @@ const CREA_USUARIO = `
 const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefono, cedula from usuarios where email = $1`;
 
 /**
- * @description Obtiene los datos de un usuario para la autenticación que viajan en el token. Usado por el middleware 'protegeRuta'
+ * @description Obtiene los datos de un usuario para la autenticación y
+ * autorización que viajan en el token, como tambien el estado de configuración actual del edificio. Usado por el middleware 'protegeRuta'
  */
 const USUARIO_TOKEN = `
     SELECT 
@@ -23,7 +24,8 @@ const USUARIO_TOKEN = `
         u.estado, 
         u.rol, 
         u.id_edificio_actual,
-        e.nombre AS nombre_edificio
+        e.nombre AS nombre_edificio,
+        e.estado_configuracion
     FROM usuarios AS u
     LEFT JOIN edificios AS e ON u.id_edificio_actual = e.id
     WHERE u.id = $1;

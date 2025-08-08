@@ -2,6 +2,9 @@ const format = require('pg-format');
 const db = require('../../config/db');
 const AppError = require('../../utils/appError');
 const unidadQueries = require('../../queries/unidadQueries');
+const edificioQueries = require('../../queries/edificioQueries');
+const { ESTADOS_CONFIGURACION } = require('../../config/constantes');
+
 
 /**
  * @description Genera unidades de forma masiva para un edificio.
@@ -9,7 +12,9 @@ const unidadQueries = require('../../queries/unidadQueries');
  * @access Private (administrador)
  */
 const generarUnidadesFlexible = async (req, res, next) => {
-    try {
+	const cliente = await db.getClient();
+	try {
+		await cliente.query('BEGIN');
 		// --- 1. OBTENER Y VALIDAR DATOS ---
 		const {
 			patronNombre,
@@ -114,16 +119,31 @@ const generarUnidadesFlexible = async (req, res, next) => {
 		);
 		await db.query(sql);
 
+		// --- 3.1. ACTUALIZAR EL ESTADO DEL EDIFICIO ---
+		await cliente.query(edificioQueries.ACTUALIZA_ESTADO_CONFIGURACION, [
+			ESTADOS_CONFIGURACION.PASO_2_RECURSOS,
+			idEdificio,
+		]);
+
+		await cliente.query('COMMIT');
+
 		// --- 4. RESPUESTA EXITOSA ---
 		res.status(201).json({
 			success: true,
 			message: `${unidadesParaInsertar.length} unidades han sido creadas exitosamente.`,
+			data: {
+				// Devolvemos el nuevo estado para que el frontend pueda renderizar.
+				nuevoEstado: ESTADOS_CONFIGURACION.PASO_2_RECURSOS,
+			},
 		});
 	} catch (error) {
+		await cliente.query('ROLLBACK');
         if (error.code === '23505') {
             return next(new AppError('Una o más de las unidades generadas ya existen para este edificio.', 409));
         }
         next(error);
+    }finally {
+        await cliente.release();
     }
 };
 
