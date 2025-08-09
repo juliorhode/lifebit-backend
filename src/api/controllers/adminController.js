@@ -7,6 +7,7 @@ const emailService = require('../../services/emailService');
 const usuarioQueries = require('../../queries/usuarioQueries');
 const unidadQueries = require('../../queries/unidadQueries');
 const trabajoQueries = require('../../queries/trabajoQueries');
+const residenteQueries = require('../../queries/residenteQueries');
 
 /**
  * @description Invita a un nuevo residente al edificio del administrador, asociándolo a una unidad.
@@ -18,8 +19,7 @@ const invitarResidente = async (req, res, next) => {
 	const cliente = await db.getClient();
 	try {
 		// --- 1. EXTRACCIÓN Y VALIDACIÓN DE DATOS ---
-		const { nombre, apellido, email, telefono, cedula, idUnidad } =
-			req.body;
+		const { nombre, apellido, email, telefono, cedula, idUnidad } = req.body;
 		// Obtenemos los datos del administrador desde el middleware 'protegeRuta'.
 		const idEdificio = req.user.id_edificio_actual;
 		const nombreEdificio = req.user.nombre_edificio;
@@ -37,10 +37,10 @@ const invitarResidente = async (req, res, next) => {
 		// Verificamos que la unidad (idUnidad) realmente pertenezca al edificio del administrador.
 		const {
 			rows: [unidad],
-		} = await cliente.query(
-			unidadQueries.OBTENER_UNIDAD_POR_ID_Y_EDIFICIO,
-			[idUnidad, idEdificio]
-		);
+		} = await cliente.query(unidadQueries.OBTENER_UNIDAD_POR_ID_Y_EDIFICIO, [
+			idUnidad,
+			idEdificio,
+		]);
 		if (!unidad) {
 			throw new AppError(
 				`La unidad con ID ${idUnidad} no exite o no pertenece a tu edificio.`,
@@ -62,10 +62,7 @@ const invitarResidente = async (req, res, next) => {
 			'residente', // Asignamos el rol 'residente'.
 			idUnidad, // Asociamos al usuario con su unidad.
 		];
-		await cliente.query(
-			usuarioQueries.CREA_USUARIO_INVITADO,
-			valoresUsuario
-		);
+		await cliente.query(usuarioQueries.CREA_USUARIO_INVITADO, valoresUsuario);
 		// Enviamos el email de invitación, pasando el nombre del edificio.
 		const nombreCompleto = `${nombre} ${apellido}`;
 		await emailService.enviarEmailInvitacionResidente(
@@ -110,10 +107,7 @@ const invitarResidentesMasivo = async (req, res, next) => {
 	try {
 		// --- 1. CONFIGURACIÓN Y LECTURA INICIAL DEL ARCHIVO ---
 		if (!req.file) {
-			throw new AppError(
-				'No se proporcionó ningún archivo para la carga masiva.',
-				400
-			);
+			throw new AppError('No se proporcionó ningún archivo para la carga masiva.', 400);
 		}
 
 		const idEdificio = req.user.id_edificio_actual;
@@ -124,10 +118,7 @@ const invitarResidentesMasivo = async (req, res, next) => {
 		const worksheet = workbook.getWorksheet(1);
 
 		if (!worksheet || worksheet.rowCount <= 1) {
-			throw new AppError(
-				'El archivo Excel está vacío o no contiene filas de datos.',
-				400
-			);
+			throw new AppError('El archivo Excel está vacío o no contiene filas de datos.', 400);
 		}
 
 		// --- 2. EXTRACCIÓN Y PRE-PROCESAMIENTO DE DATOS DEL ARCHIVO ---
@@ -142,50 +133,33 @@ const invitarResidentesMasivo = async (req, res, next) => {
 					email: (row.getCell(3).value || '').toString().trim(),
 					telefono: (row.getCell(4).value || '').toString().trim(),
 					cedula: (row.getCell(5).value || '').toString().trim(),
-					nombreUnidad: (row.getCell(6).value || '')
-						.toString()
-						.trim()
-						.toLowerCase(),
-					nombreUnidadOriginal: (row.getCell(6).value || '')
-						.toString()
-						.trim(),
+					nombreUnidad: (row.getCell(6).value || '').toString().trim().toLowerCase(),
+					nombreUnidadOriginal: (row.getCell(6).value || '').toString().trim(),
 				});
 			}
 		});
 
 		if (filasDelArchivo.length === 0) {
-			throw new AppError(
-				'No se encontraron filas con datos en el archivo.',
-				400
-			);
+			throw new AppError('No se encontraron filas con datos en el archivo.', 400);
 		}
 
 		// --- 3. VALIDACIÓN CRUZADA CON LA BASE DE DATOS (EFICIENTE) ---
-		const emailsAValidar = filasDelArchivo
-			.map((f) => f.email)
-			.filter(Boolean);
-		const cedulasAValidar = filasDelArchivo
-			.map((f) => f.cedula)
-			.filter(Boolean);
+		const emailsAValidar = filasDelArchivo.map((f) => f.email).filter(Boolean);
+		const cedulasAValidar = filasDelArchivo.map((f) => f.cedula).filter(Boolean);
 
 		// Hacemos una única consulta para traer todas las unidades y usuarios existentes.
 		const [unidadesResult, usuariosExistentesResult] = await Promise.all([
 			db.query(unidadQueries.OBTENER_UNIDADES_POR_EDIFICIO, [idEdificio]),
-			db.query(
-				usuarioQueries.GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA,
-				[emailsAValidar, cedulasAValidar]
-			),
+			db.query(usuarioQueries.GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA, [
+				emailsAValidar,
+				cedulasAValidar,
+			]),
 		]);
 
 		const unidadesMap = new Map(
-			unidadesResult.rows.map((u) => [
-				u.numero_unidad.toLowerCase(),
-				u.id,
-			])
+			unidadesResult.rows.map((u) => [u.numero_unidad.toLowerCase(), u.id])
 		);
-		const emailsExistentesSet = new Set(
-			usuariosExistentesResult.rows.map((u) => u.email)
-		);
+		const emailsExistentesSet = new Set(usuariosExistentesResult.rows.map((u) => u.email));
 		const cedulasExistentesSet = new Set(
 			usuariosExistentesResult.rows.map((u) => u.cedula).filter(Boolean)
 		);
@@ -195,7 +169,7 @@ const invitarResidentesMasivo = async (req, res, next) => {
 		const erroresDeValidacion = [];
 
 		for (const fila of filasDelArchivo) {
-			if (!fila.nombre ||!fila.apellido || !fila.email || !fila.nombreUnidad) {
+			if (!fila.nombre || !fila.apellido || !fila.email || !fila.nombreUnidad) {
 				erroresDeValidacion.push({
 					fila: fila.numeroFila,
 					error: 'Faltan datos obligatorios (Nombre, Apellido, Email o Unidad).',
@@ -223,8 +197,7 @@ const invitarResidentesMasivo = async (req, res, next) => {
 				if (fila.cedula) cedulasExistentesSet.add(fila.cedula);
 			}
 		}
-		console.log({usuariosParaInvitar});
-		
+		console.log({ usuariosParaInvitar });
 
 		// --- 5. EJECUCIÓN DE OPERACIONES EN BD (SI HAY USUARIOS VÁLIDOS) ---
 		if (usuariosParaInvitar.length > 0) {
@@ -236,17 +209,15 @@ const invitarResidentesMasivo = async (req, res, next) => {
 				const trabajosParaEncolar = [];
 
 				for (const usuario of usuariosParaInvitar) {
-					const { tokenPlano, tokenHasheado } = tokenUtils.generaTokenRegistro()
-					const tokenExpira = new Date(
-						Date.now() + 72 * 60 * 60 * 1000
-					);
+					const { tokenPlano, tokenHasheado } = tokenUtils.generaTokenRegistro();
+					const tokenExpira = new Date(Date.now() + 72 * 60 * 60 * 1000);
 
 					usuariosParaInsertarDB.push([
 						usuario.nombre,
 						usuario.apellido,
 						usuario.email,
 						usuario.telefono,
-						usuario.cedula|| null,
+						usuario.cedula || null,
 						idEdificio,
 						tokenHasheado,
 						tokenExpira,
@@ -304,7 +275,204 @@ const invitarResidentesMasivo = async (req, res, next) => {
 		next(error);
 	}
 };
+
+/**
+ * @description Obtiene una lista completa de los residentes del edificio del administrador.
+ * @route GET /api/admin/residentes
+ * @access Private (administrador)
+ */
+const obtenerResidentes = async (req, res, next) => {
+	try {
+		// Obtenemos el ID del edificio desde el token del administrador
+		const idEdificio = req.user.id_edificio_actual;
+		// Validamos que esté asociado al edificio
+		if (!idEdificio) {
+			throw new AppError('El administrador no esta asociado a este edificio.', 400);
+		}
+		// Ejecutamos la query para obtener la lista de residentes
+		const { rows: residentes } = await db.query(
+			residenteQueries.OBTENER_RESIDENTES_POR_EDIFICIO,
+			[idEdificio]
+		);
+
+		// Devolvemos el listado de residentes (el Array puede estar vacio, no es un error)
+		res.status(200).json({
+			success: true,
+			data: residentes,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+/**
+ * @description Actualiza la información de un residente específico. Permite modificar
+ * datos personales, el estado, y asignar/reasignar/desasignar su unidad.
+ * @route PATCH /api/admin/residentes/:id
+ * @access Private (administrador)
+ */
+const actualizaResidente = async (req, res, next) => {
+	try {
+		// --- 1. EXTRACCIÓN INICIAL DE DATOS ---
+		const { id: idResidente } = req.params; // ID del residente a modificar (de la URL).
+		const idEdificio = req.user.id_edificio_actual; // ID del edificio del admin (del token).
+
+		// --- 2. VALIDACIÓN DE PROPIEDAD (SEGURIDAD) ---
+		// Se realiza una consulta inicial para dos propósitos:
+		// a) Verificar que el residente existe y pertenece al edificio del administrador.
+		// b) Obtener el estado actual del residente para usarlo como valor por defecto.
+		const {
+			rows: [residenteActual],
+		} = await db.query(residenteQueries.OBTENER_RESIDENTE_POR_ID_Y_EDIFICIO, [
+			idResidente,
+			idEdificio,
+		]);
+
+		if (!residenteActual) {
+			throw new AppError(
+				`El residente con ID ${idResidente} no existe o no pertenece a tu edificio.`,
+				404
+			);
+		}
+
+		// --- 3. PROCESAMIENTO DEL CAMBIO DE UNIDAD ---
+		const { numeroUnidad } = req.body;
+		let idUnidadFinal = residenteActual.id_unidad_actual; // Por defecto, la unidad no cambia.
+
+		// Esta lógica solo se ejecuta si el campo 'numeroUnidad' fue enviado en el body.
+		if (numeroUnidad !== undefined) {
+			if (numeroUnidad === null || numeroUnidad === '') {
+				// CASO 1: Desasignar al residente de cualquier unidad.
+				idUnidadFinal = null;
+			} else {
+				// CASO 2: Asignar o reasignar a una nueva unidad.
+				// Validación A: La nueva unidad debe existir en el edificio.
+				const {
+					rows: [unidadEncontrada],
+				} = await db.query(unidadQueries.OBTENER_UNIDAD_POR_NOMBRE_Y_EDIFICIO, [
+					numeroUnidad,
+					idEdificio,
+				]);
+				if (!unidadEncontrada) {
+					throw new AppError(
+						`La unidad con el nombre "${numeroUnidad}" no existe en tu edificio.`,
+						404
+					);
+				}
+
+				// Validación B: La nueva unidad debe estar disponible (no ocupada por OTRO residente).
+				const { rowCount } = await db.query(
+					unidadQueries.OBTENER_DISPONIBILIDAD_UNIDAD,
+					[unidadEncontrada.id, idResidente]
+				);
+				if (rowCount > 0) {
+					throw new AppError(
+						`La unidad "${numeroUnidad}" ya está ocupada por otro residente.`,
+						409
+					); // 409 Conflict
+				}
+
+				// Si todas las validaciones pasan, la nueva unidad es válida.
+				idUnidadFinal = unidadEncontrada.id;
+			}
+		}
+
+		// --- 4. PREPARACIÓN DE DATOS PARA EL UPDATE ---
+		// Se construye un objeto con los datos finales. Si un campo no viene en el body,
+		// se utiliza el valor actual de la base de datos como fallback.
+		const datosParaActualizar = {
+			nombre: req.body.nombre || residenteActual.nombre,
+			apellido: req.body.apellido || residenteActual.apellido,
+			email: req.body.email || residenteActual.email,
+			telefono:
+				req.body.telefono === undefined ? residenteActual.telefono : req.body.telefono, // Permite poner el teléfono en blanco
+			cedula: req.body.cedula === undefined ? residenteActual.cedula : req.body.cedula,
+			estado: req.body.estado || residenteActual.estado,
+			id_unidad_actual: idUnidadFinal,
+		};
+
+		// --- 5. EJECUCIÓN DE LA ACTUALIZACIÓN ---
+		const valores = [
+			datosParaActualizar.nombre,
+			datosParaActualizar.apellido,
+			datosParaActualizar.email,
+			datosParaActualizar.telefono,
+			datosParaActualizar.cedula,
+			datosParaActualizar.estado,
+			datosParaActualizar.id_unidad_actual,
+			idResidente,
+		];
+
+		const {
+			rows: [residenteActualizado],
+		} = await db.query(residenteQueries.ACTUALIZAR_RESIDENTE, valores);
+
+		// --- 6. RESPUESTA EXITOSA ---
+		res.status(200).json({
+			success: true,
+			message: 'La información del residente ha sido actualizada exitosamente.',
+			data: {
+				residente: residenteActualizado,
+			},
+		});
+	} catch (error) {
+		// Manejamos errores de unicidad si se intenta poner un email o cédula que ya existen.
+		if (error.code === '23505') {
+			return next(
+				new AppError(
+					'El email o la cédula proporcionados ya están en uso por otro usuario.',
+					409
+				)
+			);
+		}
+		// Pasamos cualquier otro error a nuestro manejador central.
+		next(error);
+	}
+};
+/**
+ * @description "Elimina" (suspende) a un residente del edificio.
+ * @route DELETE /api/admin/residentes/:id
+ * @access Private (administrador)
+ */
+const eliminarResidente = async (req, res, next) => {
+	try {
+		const { id: idResidente } = req.params;
+		const idEdificio = req.user.id_edificio_actual;
+
+		// 1. VERIFICACIÓN DE PROPIEDAD: Primero, nos aseguramos de que el residente a eliminar existe
+		// y pertenece al edificio del administrador. Reutilizamos la query de 'actualizar'.
+		const { rowCount } = await db.query(residenteQueries.OBTENER_RESIDENTE_POR_ID_Y_EDIFICIO, [
+			idResidente,
+			idEdificio,
+		]);
+
+		if (rowCount === 0) {
+			throw new AppError(
+				`El residente con ID ${idResidente} no existe o no pertenece a tu edificio.`,
+				404
+			);
+		}
+
+		// 2. EJECUCIÓN DEL BORRADO BLANDO
+		const {
+			rows: [residenteSuspendido],
+		} = await db.query(residenteQueries.SUSPENDER_RESIDENTE, [idResidente]);
+
+		// 3. RESPUESTA
+		// El código de estado 204 (No Content) es ideal para un DELETE exitoso,
+		// pero como queremos enviar un mensaje, usamos 200 OK.
+		const nombreCompleto = `${residenteSuspendido.nombre} ${residenteSuspendido.apellido}`;
+		res.status(200).json({
+			success: true,
+			message: `El residente "${nombreCompleto}" ha sido suspendido y su acceso a la plataforma ha sido revocado.`,
+		});
+	} catch (error) {
+		next(error);
+	}
+}
 module.exports = {
 	invitarResidente,
 	invitarResidentesMasivo,
+	obtenerResidentes,
+	actualizaResidente,
+	eliminarResidente,
 };

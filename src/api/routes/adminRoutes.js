@@ -15,18 +15,12 @@ router.use(protegeRuta, verificaRol('administrador'));
 
 // --- RUTA PARA GESTIONAR EL FLUJO DEL ASISTENTE ---
 // POST /api/admin/configuracion/avanzar-paso
-router.post(
-	'/configuracion/avanzar-paso',
-	configController.avanzarPasoConfiguracion
-);
+router.post('/configuracion/avanzar-paso', configController.avanzarPasoConfiguracion);
 
 // --- Rutas de Gestión de Unidades ---
 // Para generar las unidades del edificio
 // POST /api/admin/unidades/generar-flexible
-router.post(
-	'/unidades/generar-flexible',
-	unidadController.generarUnidadesFlexible
-);
+router.post('/unidades/generar-flexible', unidadController.generarUnidadesFlexible);
 // Para listar todos los apartamentos cargados del edificio
 // GET /api/admin/unidades/
 router.get('/unidades', unidadController.obtenerUnidades);
@@ -45,10 +39,7 @@ router
 
 // --- Rutas de Instancias de Recurso ---
 // POST /api/admin/recursos/generar-secuencial
-router.post(
-	'/recursos/generar-secuencial',
-	recursoController.generarRecursosSecuencialmente
-);
+router.post('/recursos/generar-secuencial', recursoController.generarRecursosSecuencialmente);
 
 // POST /api/admin/recursos/cargar-inventario
 // 1. Primero se ejecuta el middleware 'uploadSpreadsheet'.
@@ -60,15 +51,9 @@ router.post(
 	recursoController.cargaInventarioArchivo
 );
 // PATCH /api/admin/recursos/asignaciones
-router.patch(
-	'/recursos/asignaciones',
-	recursoController.actualizarAsignaciones
-);
+router.patch('/recursos/asignaciones', recursoController.actualizarAsignaciones);
 // GET /api/admin/recursos/por-tipo/:idTipo
-router.get(
-	'/recursos/por-tipo/:idTipo',
-	recursoController.obtenerRecursosPorTipo
-);
+router.get('/recursos/por-tipo/:idTipo', recursoController.obtenerRecursosPorTipo);
 
 // --- Rutas de Gestión de Residentes ---
 // Para invitar a un residente, también se requiere que las unidades ya existan.
@@ -82,4 +67,13 @@ router.post(
 	xlsxUploadMiddleware,
 	adminController.invitarResidentesMasivo
 );
+
+// GET /api/admin/residentes
+router.get('/residentes', adminController.obtenerResidentes);
+
+router
+	.route('/residentes/:id')
+	.patch(adminController.actualizaResidente) // PATCH /api/admin/residentes/:id
+	.delete(adminController.eliminarResidente); // DELETE /api/admin/residentes/:id
+
 module.exports = router;
