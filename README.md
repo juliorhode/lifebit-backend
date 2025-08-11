@@ -820,6 +820,11 @@ El resultado sería exactamente el mismo. La pestaña "Authorization" es solo un
 ## Instalacion
 `npm install exceljs`
 
+# cookie-parser
+Es un middleware para Express que, al igual que express.json(), lee una parte de la petición entrante y la hace fácil de usar. En este caso, parsea la cabecera Cookie y puebla el objeto req.cookies con las cookies enviadas por el cliente.
+
+## Instalacion
+`npm install cookie-parser`
 
 
 

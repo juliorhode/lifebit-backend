@@ -39,6 +39,46 @@ const GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA = `
     SELECT email, cedula FROM usuarios 
     WHERE email = ANY($1::varchar[]) OR (cedula IS NOT NULL AND cedula = ANY($2::varchar[]));
 `;
+/**
+ * @description Busca a un usuario activo por su dirección de email.
+ */
+const OBTENER_USUARIO_ACTIVO_POR_EMAIL = `
+    SELECT id, nombre, apellido, email FROM usuarios WHERE email = $1 AND estado = 'activo';
+`;
+/**
+ * @description Guarda el token de reseteo de contraseña y su expiración para un usuario.
+ */
+const GUARDAR_TOKEN_RESETEO = `
+    UPDATE usuarios SET token_reseteo_pass = $1, token_reseteo_expira = $2 WHERE id = $3;
+`;
+/**
+ * @description Busca un usuario por un token de reseteo válido.
+ */
+const OBTENER_USUARIO_POR_TOKEN_RESETEO = `
+    SELECT * FROM usuarios WHERE token_reseteo_pass = $1 AND token_reseteo_expira > NOW();
+`;
+
+/**
+ * @description Actualiza la contraseña de un usuario y limpia los tokens de reseteo.
+ */
+const RESETEAR_CONTRASENA = `
+    UPDATE usuarios
+    SET contraseña = $1, token_reseteo_pass = NULL, token_reseteo_expira = NULL, fecha_actualizacion = NOW()
+    WHERE id = $2;
+`;
+
+/**
+ * @description Obtiene el hash de la contraseña actual de un usuario por su ID.
+ * Para verificar la contraseña actual antes de permitir un cambio.
+ */
+const OBTENER_CONTRASENA_POR_ID = `SELECT contraseña FROM usuarios WHERE id = $1;`;
+
+/**
+ * @description Actualiza únicamente la contraseña de un usuario.
+ */
+const ACTUALIZAR_CONTRASENA = `
+    UPDATE usuarios SET contraseña = $1, fecha_actualizacion = NOW() WHERE id = $2;
+`;
 module.exports = {
     CREA_USUARIO_INVITADO,
     OBTENER_INVITADO_POR_TOKEN,
@@ -46,4 +86,10 @@ module.exports = {
     OBTENER_USUARIOS_POR_EMAILS,
     GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA,
     CREA_USUARIOS_MASIVO,
+    OBTENER_USUARIO_ACTIVO_POR_EMAIL,
+    GUARDAR_TOKEN_RESETEO,
+    OBTENER_USUARIO_POR_TOKEN_RESETEO,
+    RESETEAR_CONTRASENA,
+    OBTENER_CONTRASENA_POR_ID,
+    ACTUALIZAR_CONTRASENA,
 }

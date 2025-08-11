@@ -33,6 +33,9 @@ DROP TABLE IF EXISTS discusiones_hilos CASCADE;
 DROP TABLE IF EXISTS noticias CASCADE;
 DROP TABLE IF EXISTS incidencias CASCADE;
 DROP TABLE IF EXISTS cartas CASCADE;
+DROP TABLE IF EXISTS cola_de_trabajos CASCADE;
+
+
 -- -----------------------------------------------------------------------------
 -- Tabla: usuarios
 -- -----------------------------------------------------------------------------
@@ -50,6 +53,8 @@ CREATE TABLE usuarios (
     estado VARCHAR(50) NOT NULL DEFAULT 'invitado' CHECK (estado IN ('invitado', 'activo', 'suspendido')),
     token_registro VARCHAR(255),
     token_registro_expira TIMESTAMPTZ,
+    token_reseteo_pass VARCHAR(255),
+    token_reseteo_expira TIMESTAMPTZ,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

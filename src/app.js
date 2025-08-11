@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 // Importamos morgan para el logger
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 
 /* Importar Enrutadores */
 const solicitudRoutes = require('./api/routes/solicitudRoutes');
@@ -14,6 +15,7 @@ const app = express();
 
 /**** Middleware para parsear cuerpos de peticion en formato JSON ****/
 app.use(express.json());
+app.use(cookieParser());
 
 // Usamos el middleware morgan.
 // 'dev' es un formato predefinido que nos da una salida concisa y coloreada

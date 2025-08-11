@@ -4,7 +4,10 @@ const queries = require('../../queries/authQueries');
 const usuarioQueries = require('../../queries/usuarioQueries');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const tokenUtils = require('../../utils/tokenUtils');
+const emailService = require('../../services/emailService');
+const trabajoQueries = require('../../queries/trabajoQueries');
+const format = require('pg-format');
 const AppError = require('../../utils/appError');
 const generaTokens = require('../../utils/jwtUtils');
 
@@ -19,8 +22,7 @@ const generaTokens = require('../../utils/jwtUtils');
 const register = async (req, res, next) => {
 	try {
 		// Extraemos los datos del cuerpo de la petición
-		const { nombre, apellido, email, contraseña, telefono, cedula } =
-			req.body;
+		const { nombre, apellido, email, contraseña, telefono, cedula } = req.body;
 		// Verificamos que los campos obligatorios (según la BD) estén presentes.
 		if (!nombre || !apellido || !email || !contraseña || !cedula) {
 			// Si faltan datos, pasamos un error al manejador de errores global.
@@ -57,10 +59,7 @@ const register = async (req, res, next) => {
 		// Guardar el usuario en la base de datos.
 		const values = [nombre, apellido, email, passHash, telefono, cedula];
 		// desestructuro rows y lo renombro al mismo tiempo
-		const { rows: nuevoUsuario } = await db.query(
-			queries.CREA_USUARIO,
-			values
-		);
+		const { rows: nuevoUsuario } = await db.query(queries.CREA_USUARIO, values);
 		// Enviar respuesta exitosa.
 		// No devolvemos la contraseña hasheada.
 		res.status(201).json({
@@ -76,9 +75,7 @@ const register = async (req, res, next) => {
 			// return res.status(409).json({
 			// 	error: 'El correo electrónico o la cédula ya están en uso.',
 			// })
-			return next(
-				new AppError('El correo electronico ya esta registrado', 409)
-			);
+			return next(new AppError('El correo electronico ya esta registrado', 409));
 		}
 		// Pasamos el error a nuestro manejador global.
 		next(error);
@@ -98,10 +95,7 @@ const login = async (req, res, next) => {
 		const { email, contraseña } = req.body;
 		// 2. Validar que los datos de entrada existen.
 		if (!email || !contraseña) {
-			throw new AppError(
-				'Por favor, proporciones un email y una contraseña',
-				400
-			);
+			throw new AppError('Por favor, proporciones un email y una contraseña', 400);
 		}
 		// 3. Verificamos si existe el usuario
 		const result = await db.query(queries.USUARIO_EXISTE, [email]);
@@ -110,10 +104,7 @@ const login = async (req, res, next) => {
 		// console.log(usuario.contraseña)
 
 		// 4. Usamos bcrypt.compare para comparar de forma segura la contraseña enviada con el hash almacenado en la base de datos.
-		if (
-			!usuario ||
-			!(await bcrypt.compare(contraseña, usuario.contraseña))
-		) {
+		if (!usuario || !(await bcrypt.compare(contraseña, usuario.contraseña))) {
 			// El mensaje de error es genérico. Esto previene "ataques de enumeración de usuarios"
 			throw new AppError('Email o contraseña invalida', 401);
 		}
@@ -126,7 +117,14 @@ const login = async (req, res, next) => {
 			rol: usuario.rol,
 			id_edificio: usuario.id_edificio_actual, // Incluimos el ID del edificio en el token
 		};
-		const tokens = generaTokens(payload);
+		const { accessToken, refreshToken } = generaTokens(payload);
+		// Enviamos el refreshToken como una HttpOnly cookie.
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+		});
 		// 6. Enviar los tokens y la información del usuario en la respuesta.
 		// Eliminamos la contraseña del objeto de usuario antes de enviarlo.
 		usuario.contraseña = undefined;
@@ -134,7 +132,7 @@ const login = async (req, res, next) => {
 		res.status(200).json({
 			success: true,
 			message: 'Login exitoso',
-			tokens,
+			accessToken,
 			data: {
 				usuario,
 			},
@@ -169,12 +167,11 @@ const obtenerPerfil = (req, res, next) => {
  */
 const refreshToken = async (req, res, next) => {
 	try {
-		// 1. Obtener el refreshToken del cuerpo de la petición.
-		// El frontend lo enviará en el cuerpo del JSON.
-		const { refreshToken } = req.body;
+		// 1. Obtenemos el refreshToken DESDE LAS COOKIES, no desde el body.
+		const refreshToken = req.cookies.refreshToken;
 		if (!refreshToken) {
 			return next(
-				new AppError('No se proporcionó un token de refresco', 400)
+				new AppError('No se proporcionó un token de refresco o la sesión ha expirado.', 400)
 			);
 		}
 		// 2. Verificar el refreshToken usando el SECRETO DE REFRESCO.
@@ -196,12 +193,7 @@ const refreshToken = async (req, res, next) => {
 		const result = await db.query(queries.USUARIO_TOKEN, [decoded.id]);
 		const usuario = result.rows[0];
 		if (!usuario || usuario.estado !== 'activo') {
-			return next(
-				new AppError(
-					'No se puede refrescar el token para este usuario',
-					403
-				)
-			);
+			return next(new AppError('No se puede refrescar el token para este usuario', 403));
 		}
 		// 4. Si todo es correcto, generamos un NUEVO accessToken.
 		// Creamos el payload con la información fresca del usuario.
@@ -235,36 +227,24 @@ const finalizarRegistro = async (req, res, next) => {
 		const { token, contraseña } = req.body;
 
 		if (!token || !contraseña) {
-			throw new AppError(
-				'Por favor, proporcione el token y su nueva contraseña.',
-				400
-			);
+			throw new AppError('Por favor, proporcione el token y su nueva contraseña.', 400);
 		}
 
 		// Hasheamos el token recibido del cliente para buscarlo en la BD.
-		const tokenHasheado = crypto
-			.createHash('sha256')
-			.update(token)
-			.digest('hex');
+		const tokenHasheado = crypto.createHash('sha256').update(token).digest('hex');
 
 		// --- BLOQUE DE DEPURACIÓN ---
 		console.log('--- Depurando finalizarRegistro ---');
 		console.log('Token recibido (plano):', token);
 		console.log('Token hasheado (para la búsqueda):', tokenHasheado);
-		console.log('Query a ejecutar:',usuarioQueries.OBTENER_INVITADO_POR_TOKEN);
+		console.log('Query a ejecutar:', usuarioQueries.OBTENER_INVITADO_POR_TOKEN);
 		console.log('---------------------------------');
 
 		// Buscamos al usuario invitado.
-		const result = await db.query(
-			usuarioQueries.OBTENER_INVITADO_POR_TOKEN,
-			[tokenHasheado]
-		);
+		const result = await db.query(usuarioQueries.OBTENER_INVITADO_POR_TOKEN, [tokenHasheado]);
 		const usuario = result.rows[0];
 		if (!usuario) {
-			throw new AppError(
-				'El token es invalido, ha espirado o ya fue utilizado',
-				400
-			);
+			throw new AppError('El token es invalido, ha espirado o ya fue utilizado', 400);
 		}
 
 		// Hasheamos la nueva contraseña.
@@ -272,10 +252,7 @@ const finalizarRegistro = async (req, res, next) => {
 		const contraseñaHasheada = await bcrypt.hash(contraseña, salt);
 
 		// Activamos al usuario en la BD.
-		await db.query(usuarioQueries.ACTIVAR_USUARIO, [
-			contraseñaHasheada,
-			usuario.id,
-		]);
+		await db.query(usuarioQueries.ACTIVAR_USUARIO, [contraseñaHasheada, usuario.id]);
 
 		res.status(200).json({
 			success: true,
@@ -285,11 +262,177 @@ const finalizarRegistro = async (req, res, next) => {
 		next(error);
 	}
 };
+/**
+ * @description Inicia el flujo de reseteo de contraseña para un usuario.
+ * @route POST /api/auth/forgot-password
+ * @access Public
+ */
+const forgotPassword = async (req, res, next) => {
+	try {
+		const { email } = req.body;
+		if (!email) {
+			throw new AppError('Por favor, proporcione un email', 400);
+		}
 
+		// 1. Buscar al usuario activo por su email.
+		const {
+			rows: [usuario],
+		} = await db.query(usuarioQueries.OBTENER_USUARIO_ACTIVO_POR_EMAIL, [email]);
+		// Si no se encuentra el usuario, NO devolvemos un error 404.
+		// Enviamos una respuesta de éxito genérica para no revelar si un email
+		// está registrado en nuestro sistema (previene la enumeración de usuarios).
+		if (!usuario) {
+			return res.status(200).json({
+				success: true,
+				message:
+					'Si existe una cuenta con este email, recibirás un correo con instrucciones para restablecer tu contraseña.',
+			});
+		}
+		// 2. Generar el token de reseteo.
+		// Reutilizaremos nuestra utilidad de tokens de registro, ya que el principio es el mismo.
+		const { tokenPlano, tokenHasheado } = tokenUtils.generaTokenRegistro();
+		const tokenExpira = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos de expiración
+		// 3. Guardar el token hasheado y la expiración en la base de datos.
+		await db.query(usuarioQueries.GUARDAR_TOKEN_RESETEO, [
+			tokenHasheado,
+			tokenExpira,
+			usuario.id,
+		]);
+		// 4. Encolar el trabajo de envío de email.
+		// Para ser consistentes, también lo encolamos, aunque sea un solo email.
+		const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+		const payloadEmail = {
+			destinatarioEmail: usuario.email,
+			destinatarioNombre: nombreCompleto,
+			token: tokenPlano,
+		};
+		// mandamos [[...]] porque pg-format siempre espera un array de filas. Incluso si solo hay una fila, debemos dársela dentro de un array contenedor, ya que la query tiene el placeholder %L que espera una lista de valores
+		const datosTrabajo = [['enviar_email_reseteo_pass', JSON.stringify(payloadEmail)]];
+		// %L no es parte del lenguaje SQL. Es un placeholder específico de la librería pg-format, por lo tanto debemos pre-procesarla con la funcion format antes de pasarla a db.query()... db.query() solo entiende los placeholders $1, $2, etc.
+		const sql = format(trabajoQueries.CREA_TRABAJOS_MASIVO, datosTrabajo);
+		await db.query(sql);
+		// 5. Enviar la misma respuesta de éxito genérica.
+		res.status(200).json({
+			success: true,
+			message:
+				'Si existe una cuenta con este email, recibirás un correo con instrucciones para restablecer tu contraseña.',
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+/**
+ * @description Restablece la contraseña de un usuario usando un token válido.
+ * @route PATCH /api/auth/reset-password
+ * @access Public
+ */
+const resetPassword = async (req, res, next) => {
+	try {
+		// 1. OBTENER TOKEN Y NUEVA CONTRASEÑA
+		const { token, contraseña } = req.body;
+		if (!token || !contraseña) {
+			throw new AppError('El token y la nueva contraseña son obligatorios.', 400);
+		}
+		// 2. VALIDAR EL TOKEN
+		// Hasheamos el token en texto plano que nos llega del cliente.
+		const tokenHasheado = crypto.createHash('sha256').update(token).digest('hex');
+		// Buscamos un usuario con ese token que no haya expirado.
+		const {
+			rows: [usuario],
+		} = await db.query(usuarioQueries.OBTENER_USUARIO_POR_TOKEN_RESETEO, [tokenHasheado]);
+		if (!usuario) {
+			// Mensaje genérico para atacantes.
+			throw new AppError('El token es invalido, ha espirado o ya fue utilizado', 400);
+		}
+		// 3. ACTUALIZAR LA CONTRASEÑA
+		// Hasheamos la nueva contraseña antes de guardarla.
+		const salt = await bcrypt.genSalt(10);
+		const contraseñaHasheada = await bcrypt.hash(contraseña, salt);
+		// Ejecutamos la query que actualiza la contraseña y limpia los tokens de reseteo.
+		await db.query(usuarioQueries.RESETEAR_CONTRASENA, [contraseñaHasheada, usuario.id]);
+		// 4. RESPUESTA EXITOSA
+		res.status(200).json({
+			success: true,
+			message:
+				'Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.',
+		});
+	} catch (error) {
+		next(error);
+	}
+}
+
+/**
+ * @description Permite a un usuario autenticado cambiar su propia contraseña.
+ * Si todo sale bien, se genera nuevos tokens para invalidar sesiones anteriores.
+ * @route PATCH /api/auth/update-password
+ * @access Private (cualquier rol autenticado)
+ */
+const updatePassword = async (req, res, next) => {
+	try {
+		// --- 1. OBTENER DATOS Y VALIDAR ---
+		// Obtenemos el ID del usuario directamente del token que viene de 'protegeRuta'
+		const idUsuario = req.user.id;
+		const { contraseñaActual, nuevaContraseña } = req.body;
+
+		if (!contraseñaActual || !nuevaContraseña) {
+			throw new AppError(
+				'Por favor, proporcione la contraseña actual y la nueva contraseña',
+				400
+			);
+		}
+		
+		// --- 2. VERIFICAR LA CONTRASEÑA ACTUAL ---
+		// Obtenemos solo el hash de la contraseña de la BD.
+		const {
+			rows: [usuario],
+		} = await db.query(usuarioQueries.OBTENER_CONTRASENA_POR_ID, [idUsuario]);
+		
+		// Comparamos de forma segura el hash de la BD con la contraseña que nos envió el usuario.
+		const contraseñaCorrecta = await bcrypt.compare(contraseñaActual, usuario.contraseña);
+		if (!contraseñaCorrecta) {
+			throw new AppError('La contraseña actual es incorrecta', 401); // 401 Unauthorized
+		}
+		
+		// --- 3. HASHEAR Y GUARDAR LA NUEVA CONTRASEÑA ---
+		const salt = await bcrypt.genSalt(10);
+		const contraseñaHasheada = await bcrypt.hash(nuevaContraseña, salt);
+		await db.query(usuarioQueries.ACTUALIZAR_CONTRASENA, [contraseñaHasheada, idUsuario]);
+		
+		// --- 4. GENERAR NUEVOS TOKENS (SEGURIDAD) ---
+		// Al generar un nuevo set de tokens, cualquier 'refreshToken' que pudiera
+		// estar activo en otros dispositivos (ej. un portátil robado) quedará invalidado,
+		// ya que el frontend deberá usar el nuevo refreshToken.
+		const payload = {
+			id: req.user.id,
+			rol: req.user.rol,
+			id_edificio: req.user.id_edificio_actual,
+		};
+		const { accessToken, refreshToken } = generaTokens(payload);
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+		})
+
+
+		res.status(200).json({
+			success: true,
+			message:
+				'Tu contraseña ha sido actualizada exitosamente. Por seguridad, por favor vuelve a iniciar sesión.',
+			accessToken, // Enviamos los nuevos tokens al frontend.
+		});
+	} catch (error) {
+		next(error);
+	}
+}
 module.exports = {
 	register,
 	login,
 	obtenerPerfil,
 	refreshToken,
 	finalizarRegistro,
+	forgotPassword,
+	resetPassword,
+	updatePassword,
 };

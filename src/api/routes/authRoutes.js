@@ -23,11 +23,11 @@ router.get('/perfil', protegeRuta, authController.obtenerPerfil)
 // POST /api/auth/finalizar-registro
 router.post('/finalizar-registro', authController.finalizarRegistro);
 
-
-// --- RUTAS FUTURAS ---
-// router.post('/finalizar-registro', authController.finalizarRegistro);
-// router.post('/forgot-password', authController.forgotPassword);
-// router.patch('/reset-password/:token', authController.resetPassword);
-// router.patch('/update-my-password', protegeRuta, authController.updateMyPassword);
+// --- RUTAS DE GESTIÓN DE CONTRASEÑA ---
+router.post('/forgot-password', authController.forgotPassword);
+router.patch('/reset-password/', authController.resetPassword);
+// 1. 'protegeRuta' se ejecuta primero. Si el token es válido, adjunta 'req.user' y llama a next().
+// 2. 'authController.updateMyPassword' se ejecuta después.
+router.patch('/update-password', protegeRuta, authController.updatePassword);
 
 module.exports = router

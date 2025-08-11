@@ -11,12 +11,17 @@ const CREA_TRABAJOS_MASIVO = `
  */
 const OBTENER_Y_BLOQUEAR_TRABAJOS = `
     SELECT * FROM cola_de_trabajos
-    WHERE estado = 'pendiente' AND intentos < max_intentos
+    WHERE (estado = 'pendiente' OR estado = 'fallido') AND intentos < max_intentos
     ORDER BY fecha_creacion ASC
     LIMIT 10 -- Tomamos un lote de hasta 10 trabajos a la vez.
     FOR UPDATE SKIP LOCKED;
 `;
-
+/**
+ * @description Actualiza un trabajo a 'procesando'. Esto evita que, si el trabajo tarda mucho, otro ciclo del worker intente cogerlo de nuevo.
+ */
+const MARCAR_TRABAJOS_PROCESANDO = `
+    UPDATE cola_de_trabajos SET estado = 'procesando' WHERE id = ANY($1::bigint[]);
+`;
 /**
  * @description Actualiza un trabajo a 'completado'.
  */
@@ -38,5 +43,6 @@ module.exports = {
     CREA_TRABAJOS_MASIVO,
     OBTENER_Y_BLOQUEAR_TRABAJOS,
     MARCAR_TRABAJO_COMPLETADO,
-    MARCAR_TRABAJO_FALLIDO
+    MARCAR_TRABAJO_FALLIDO,
+    MARCAR_TRABAJOS_PROCESANDO,
 };
