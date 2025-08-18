@@ -359,7 +359,7 @@ const resetPassword = async (req, res, next) => {
 	} catch (error) {
 		next(error);
 	}
-}
+};
 
 /**
  * @description Permite a un usuario autenticado cambiar su propia contraseña.
@@ -380,24 +380,24 @@ const updatePassword = async (req, res, next) => {
 				400
 			);
 		}
-		
+
 		// --- 2. VERIFICAR LA CONTRASEÑA ACTUAL ---
 		// Obtenemos solo el hash de la contraseña de la BD.
 		const {
 			rows: [usuario],
 		} = await db.query(usuarioQueries.OBTENER_CONTRASENA_POR_ID, [idUsuario]);
-		
+
 		// Comparamos de forma segura el hash de la BD con la contraseña que nos envió el usuario.
 		const contraseñaCorrecta = await bcrypt.compare(contraseñaActual, usuario.contraseña);
 		if (!contraseñaCorrecta) {
 			throw new AppError('La contraseña actual es incorrecta', 401); // 401 Unauthorized
 		}
-		
+
 		// --- 3. HASHEAR Y GUARDAR LA NUEVA CONTRASEÑA ---
 		const salt = await bcrypt.genSalt(10);
 		const contraseñaHasheada = await bcrypt.hash(nuevaContraseña, salt);
 		await db.query(usuarioQueries.ACTUALIZAR_CONTRASENA, [contraseñaHasheada, idUsuario]);
-		
+
 		// --- 4. GENERAR NUEVOS TOKENS (SEGURIDAD) ---
 		// Al generar un nuevo set de tokens, cualquier 'refreshToken' que pudiera
 		// estar activo en otros dispositivos (ej. un portátil robado) quedará invalidado,
@@ -413,8 +413,7 @@ const updatePassword = async (req, res, next) => {
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'strict',
 			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
-		})
-
+		});
 
 		res.status(200).json({
 			success: true,
@@ -425,7 +424,80 @@ const updatePassword = async (req, res, next) => {
 	} catch (error) {
 		next(error);
 	}
-}
+};
+
+/**
+ * @description Maneja el callback de Google OAuth. Vincula la cuenta de Google
+ * a un usuario invitado existente o loguea a un usuario ya vinculado.
+ * @route GET /api/auth/google/callback
+ */
+const googleCallback = async (req, res, next) => {
+	try {
+		const perfilGoogle = req.user;
+		if (!perfilGoogle) {
+			// Esto no debería pasar si Passport funcionó, pero es una guarda de seguridad.
+			return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth-failed`);
+		}
+
+		const email = perfilGoogle.emails[0].value;
+		const googleId = perfilGoogle.id;
+
+		// 1. PRIMERA PREGUNTA: ¿Es un usuario que ya conocemos por su Google ID?
+		let {
+			rows: [usuario],
+		} = await db.query(usuarioQueries.OBTENER_USUARIO_POR_GOOGLE_ID, [googleId]);
+
+		if (usuario) {
+			console.log(`Flujo de LOGIN con Google para: ${email}`);
+		} else {
+			// 2. SEGUNDA PREGUNTA: Si no, ¿es un usuario invitado con ese email?
+			let {
+				rows: [usuarioInvitado],
+			} = await db.query(usuarioQueries.OBTENER_INVITADO_POR_EMAIL, [email]);
+
+			if (!usuarioInvitado) {
+				// Si no es ninguno de los dos, no puede entrar.
+				return res.redirect(`${process.env.FRONTEND_URL}/login?error=invitation-not-found`);
+			}
+
+			// ¡Sí es! Lo activamos y vinculamos su Google ID.
+			console.log(`Flujo de ACTIVACIÓN con Google para: ${email}`);
+			const {
+				rows: [usuarioActualizado],
+			} = await db.query(usuarioQueries.ACTIVAR_Y_VINCULAR_GOOGLE, [
+				googleId,
+				usuarioInvitado.id,
+			]);
+			usuario = usuarioActualizado;
+		}
+
+		// --- PUNTO COMÚN: GENERAR TOKENS Y REDIRIGIR ---
+		const payload = {
+			id: usuario.id,
+			rol: usuario.rol,
+			id_edificio: usuario.id_edificio_actual,
+		};
+		const { accessToken, refreshToken } = generaTokens(payload);
+
+		// Enviamos el refreshToken como una cookie segura.
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000,
+		});
+
+		// REDIRIGIMOS al frontend a una ruta especial de callback.
+		// El frontend, en esta ruta, tomará el token de la URL, lo guardará,
+		// y luego redirigirá al usuario al dashboard.
+		return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}`);
+	} catch (error) {
+		// En caso de un error de servidor, podemos redirigir a una página de error genérica.
+		console.error('Error en googleCallback:', error);
+		return res.redirect(`${process.env.FRONTEND_URL}/login?error=server-error`);
+	}
+};
+
 module.exports = {
 	register,
 	login,
@@ -435,4 +507,5 @@ module.exports = {
 	forgotPassword,
 	resetPassword,
 	updatePassword,
+	googleCallback,
 };

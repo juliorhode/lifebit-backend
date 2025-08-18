@@ -826,7 +826,94 @@ Es un middleware para Express que, al igual que express.json(), lee una parte de
 ## Instalacion
 `npm install cookie-parser`
 
+# Integración con Google 
+## Configuración en Google Cloud Console
 
+- Ve a la Google Cloud Console: console.cloud.google.com.
+- Inicia sesión con tu cuenta de Google.
+- En la parte superior, al lado del logo de "Google Cloud", verás un menú desplegable que muestra el nombre de tu proyecto actual. Haz clic en él.
+- En la ventana que se abre, haz clic en "NEW PROJECT" (Nuevo Proyecto).
+- Nombre del Proyecto: LifeBit (o LifeBit-SaaS, como prefieras).
+- Organización: Puedes dejarlo como "Sin organización".
+- Haz clic en "CREATE" (Crear). Espera unos segundos a que el proyecto se cree. Asegúrate de que el nuevo proyecto LifeBit esté seleccionado en el menú desplegable.
+
+Acción 1.2: Configurar la Pantalla de Consentimiento de OAuth
+
+- Esta es la pantalla que verán los usuarios cuando les pidamos permiso para acceder a su información básica.
+- En la barra de búsqueda de la parte superior, escribe "APIs & Services" (APIs y Servicios) y selecciona la primera opción.
+- En el menú de la izquierda, haz clic en "OAuth consent screen" (Pantalla de consentimiento de OAuth).
+- Tipo de Usuario (User Type): Selecciona "External" (Externo). Esto significa que cualquier usuario con una cuenta de Google podrá usarlo. Haz clic en "CREATE".
+
+Paso "OAuth consent screen":
+- App name: LifeBit
+- User support email: Elige tu dirección de email del desplegable.
+- App logo: Puedes subir un logo si quieres, es opcional.
+- Developer contact information: Vuelve a introducir tu dirección de email.
+- Haz clic en "SAVE AND CONTINUE".
+
+Paso "Scopes" o  Publico (Permisos):
+
+- Aquí le decimos a Google qué información necesitamos.
+- Haz clic en "ADD OR REMOVE SCOPES".
+- En la nueva ventana, en la parte superior, filtra por .../auth/userinfo.email y .../auth/userinfo.profile.
+
+Selecciona las casillas para:
+.../auth/userinfo.email (Ver tu dirección de correo electrónico)  
+.../auth/userinfo.profile (Ver tu información personal, incluido cualquier dato que hayas hecho público)  
+
+- Haz clic en "UPDATE". Verás los dos permisos añadidos.
+- Haz clic en "SAVE AND CONTINUE".
+
+Paso "Test users":  
+
+- Mientras la aplicación está en "modo de prueba", solo los usuarios que añadas aquí podrán usar el login de Google.
+- Haz clic en "+ ADD USERS".
+- Añade tu propio email de Google (juliorhode@gmail.com) y el email de prueba que creaste para Resend (rhodejulio@gmail.com). Esto te permitirá probar el flujo completo.
+- Haz clic en "SAVE AND CONTINUE".
+- Verás un resumen. Haz clic en "BACK TO DASHBOARD".
+
+Acción 1.3: Crear las Credenciales (La Clave)
+- En el menú de la izquierda, haz clic en "Credentials" (Credenciales).
+- En la parte superior, haz clic en "+ CREATE CREDENTIALS" -> "OAuth client ID" (ID de cliente de OAuth).
+- Application type: Selecciona "Web application" (Aplicación web).
+- Name: LifeBit Backend (Desarrollo)
+- Sección "Authorized JavaScript origins" (Orígenes de JavaScript autorizados):
+- Aquí le decimos a Google desde qué URL de frontend se iniciará el login.
+- Haz clic en "+ ADD URI".
+- Escribe: http://localhost:5174 (o el puerto en el que corra tu app de Vite).
+- Sección "Authorized redirect URIs" (URIs de redirección autorizados):
+- Aquí le decimos a Google a qué URL de nuestro backend debe devolver al usuario después de la autenticación. Esta es la más importante.
+- Haz clic en "+ ADD URI".
+- Escribe: http://localhost:3000/api/auth/google/callback
+- Haz clic en "CREATE".
+¡Éxito! Google te mostrará una ventana emergente con tu "Client ID" y tu "Client Secret".
+
+Copiar y pegar el Client ID y el Client Secret en el archivo .env. Nombrarlos así:
+
+# --- GOOGLE OAUTH CREDENTIALS ---
+GOOGLE_CLIENT_ID=pega_aqui_el_client_id
+GOOGLE_CLIENT_SECRET=pega_aqui_el_client_secret
+
+# Passport.js
+Es el middleware de autenticación más popular para Node.js. No es una solución completa en sí misma, sino un marco de trabajo (framework). Su trabajo es proporcionar una estructura estándar para manejar la autenticación.
+
+Analogía: Passport es como un cinturón de herramientas. Por sí solo, no hace nada. Está vacío.
+
+## passport-google-oauth20
+Una "estrategia" es un plugin para Passport que le enseña a autenticar usando un método específico. Hay estrategias para todo: login con Google, con Facebook, con JWT, con usuario/contraseña local, etc.
+
+Analogía: passport-google-oauth20 es la herramienta específica (un destornillador de estrella) que ponemos en nuestro cinturón (Passport). passport-jwt sería otra herramienta (un martillo). Passport nos permite llevar y usar todas estas herramientas de una manera organizada.
+
+`npm install passport passport-google-oauth20`
+
+Passport a menudo requiere el manejo de sesiones. Aunque nuestra API es mayormente "sin estado" (stateless), el flujo de OAuth se beneficia de una sesión temporal para pasar datos entre la redirección a Google y el callback. express-session es la librería estándar para esto.
+
+`npm install express-session`
+
+
+
+# Crear token similar al SECRET de JWT
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 
 # Nota para puebas

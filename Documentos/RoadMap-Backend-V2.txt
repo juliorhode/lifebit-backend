@@ -40,8 +40,8 @@
     *   `[x]` Worker que encola los trabajos de envio de email masivo.
 *   `[x]` **AUTH-09:** CRUD completo de Residentes (Listar, Ver, Activar/Suspender).
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
-*   `[ ]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
-*   `[ ]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
+*   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
+*   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
 
 # =================================================================================
 # ||     Epopeya 2: Panel del Dueño (Gestión del SaaS)     `[EN PROGRESO]`         ||

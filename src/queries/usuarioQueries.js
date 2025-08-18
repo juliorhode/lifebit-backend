@@ -79,6 +79,21 @@ const OBTENER_CONTRASENA_POR_ID = `SELECT contraseña FROM usuarios WHERE id = $
 const ACTUALIZAR_CONTRASENA = `
     UPDATE usuarios SET contraseña = $1, fecha_actualizacion = NOW() WHERE id = $2;
 `;
+const OBTENER_USUARIO_POR_GOOGLE_ID = `SELECT * FROM usuarios WHERE google_id = $1;`;
+const OBTENER_INVITADO_POR_EMAIL = `SELECT * FROM usuarios WHERE email = $1 AND estado = 'invitado';`;
+const ACTIVAR_Y_VINCULAR_GOOGLE = `
+    UPDATE usuarios 
+    SET 
+        google_id = $1, 
+        estado = 'activo',
+        contraseña = NULL,
+        token_registro = NULL, 
+        token_registro_expira = NULL,
+        fecha_actualizacion = NOW()
+    WHERE id = $2 
+    RETURNING *;
+`;
+
 module.exports = {
     CREA_USUARIO_INVITADO,
     OBTENER_INVITADO_POR_TOKEN,
@@ -92,4 +107,8 @@ module.exports = {
     RESETEAR_CONTRASENA,
     OBTENER_CONTRASENA_POR_ID,
     ACTUALIZAR_CONTRASENA,
+    OBTENER_USUARIO_POR_GOOGLE_ID,
+    OBTENER_INVITADO_POR_EMAIL,
+    ACTIVAR_Y_VINCULAR_GOOGLE,
+
 }
