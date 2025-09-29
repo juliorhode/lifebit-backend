@@ -42,6 +42,11 @@
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
+* Epopeya AUTH-B: Gestión de Perfil de Usuario
+*    [ ] PERFIL-01: Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
+*    [ ] PERFIL-02: Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
+*    [ ] PERFIL-03: Flujo para vincular una cuenta de Google a una cuenta activa.
+*    [ ] PERFIL-04: Flujo para desvincular una cuenta de Google.
 
 # =================================================================================
 # ||     Epopeya 2: Panel del Dueño (Gestión del SaaS)     `[EN PROGRESO]`         ||
@@ -114,3 +119,29 @@
     *   `[ ]` Adaptar la construcción del 'payload' al formato requerido por SES.
     *   `[ ]` Actualizar las variables de entorno en producción.
 *   `[ ]` **MAINT-02 (Refactor): Implementar el modelo de 'afiliaciones' (ADR-001).**
+
+
+
+
+
+
+ADR-007: Introducción de Placeholders de Contador Global
+Título: ADR-007: Introducción de Placeholders de Contador Global para el Generador de Unidades
+Fecha: 2025-08-18
+Estado: Propuesto
+Contexto:
+El motor de generación de unidades actual (POST /api/admin/unidades/generar-flexible) utiliza placeholders que se resetean en cada "nivel principal" (definido por totalPisos). Por ejemplo, {u} se reinicia a 1 en cada nuevo piso. Durante las pruebas de UX en el frontend, se identificó un caso de uso crítico que el sistema actual no soporta: propiedades (como conjuntos de casas o galpones) donde la numeración de las unidades es consecutiva a lo largo de toda la propiedad, sin reiniciarse en cada "calle" o "manzana".
+Problema:
+La interfaz de usuario del frontend está limitada por la capacidad del backend. Para ofrecer una solución verdaderamente flexible, el motor de generación del backend necesita ser capaz de manejar contadores que no se reseteen, sino que se incrementen globalmente a través de todos los niveles.
+Decisión:
+Se ha decidido extender la funcionalidad del motor de generación del backend para que soporte un nuevo conjunto de placeholders de "contador global".
+Nuevos Placeholders a Implementar en el Backend:
+{c}: Contador global numérico simple (ej: 1, 2, ..., 30).
+{C}: Contador global numérico con 2 dígitos (ej: 01, 02, ..., 30).
+{L_c}: Contador global alfabético (ej: A, B, ..., AD).
+Lógica de Implementación Propuesta (Backend):
+El servicio del generador en el backend deberá mantener una variable de contador acumulativo. Este contador se inicializará en 1 antes de que comiencen los bucles de "piso" y se incrementará en 1 por cada unidad generada, independientemente del piso en el que se encuentre. Los nuevos placeholders se reemplazarán usando el valor de este contador global.
+Consecuencias:
+Backend: Se requiere una modificación en el servicio de generación de unidades para implementar la lógica del nuevo contador y los nuevos reemplazos de placeholders.
+Frontend: El desarrollo de la interfaz de usuario para los bloques de "Contador Global" queda bloqueado hasta que el backend implemente esta funcionalidad. Podemos construir la UI de forma aislada, pero la integración final dependerá de este cambio en la API.
+Beneficios: Esta mejora transformará el generador de una herramienta específica para edificios a una herramienta de generación de secuencias genérica y mucho más potente, ampliando significativamente los tipos de propiedades que LifeBit puede gestionar "listo para usar".

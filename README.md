@@ -192,6 +192,7 @@ Ejemplo de URL: http://localhost:3001/api/edificios?nombre=Sol&moneda=USD
 | **`200 OK`**         | OK         | La respuesta estándar para peticiones `GET` exitosas. También se usa para `PATCH` o `PUT` exitosos si se devuelve el recurso actualizado.      | `GET /api/edificios` devuelve la lista de edificios. |
 | **`201 Created`**    | Created    | Se devuelve después de que una petición `POST` ha creado un nuevo recurso con éxito. La respuesta suele incluir el nuevo recurso en el cuerpo. | `POST /api/edificios` crea un nuevo edificio.        |
 | **`204 No Content`** | No Content | Se devuelve después de una operación exitosa que no necesita devolver ningún cuerpo de respuesta, típicamente para una petición `DELETE`.      | `DELETE /api/edificios/1` borra un edificio.         |
+| **`304 Not Modified`** | No Content | He verificado que el contenido de ese recurso no ha cambiado en absoluto desde la última vez que lo pediste. axios simplemente se ejecutará con los datos que el navegador sacó de su propia caché optimizando las peticiones de red automáticamente.`GET`.      | `DELETE api/admin/recursos/tipos` obtiene los recursos de tipo.         |
 
 ### Errores del Cliente (Rango 4xx)
 Estos errores indican que el cliente ha hecho algo mal (ej. enviar datos incorrectos, pedir un recurso que no existe, no tener permisos).
@@ -702,7 +703,7 @@ Aquí tienes una guía de cómo construir patrones para nomenclaturas comunes y 
 | `A-01, B-01, C-01`      | `{L}-{U}`         | (Letra de Piso MAYÚSCULA) - (Unidad con 2 dígitos)       |
 | `A-1, A-2` (Texto Fijo) | `A-{u}`           | (Texto "A-") (Unidad simple)                             |
 | `Torre A 01-01`         | `Torre A {P}-{U}` | (Texto "Torre A ") (Piso 2 dígitos) - (Unidad 2 dígitos) |
-| `Torre A 01-01`         | `A-{P}-{U}`       | (Texto "A-") (Piso 2 dígitos) - (Unidad 2 dígitos)       |
+| `A-01-01`               | `A-{P}-{U}`       | (Texto "A-") (Piso 2 dígitos) - (Unidad 2 dígitos)       |
 | `01-A1, 01-B1, 02-A1`   | `{P}-{L_u}1`      | (Piso 2 dígitos) - (Letra Unidad MAYÚSCULA) (Texto "1")  |
 | `A01-01, B02-01`        | `{L}{P}-{U}`      | (Letra Piso)(Piso 2 dígitos)-(Unidad 2 dígitos)          |
 
@@ -972,3 +973,21 @@ Verifica que ahora tu sistema está usando la versión de Node gestionada por nv
 
 `node -v`
 `npm -v`
+
+# Fuentes de Inspiración Analizadas (Drag & Drop):
+- Zapier / Make (Automatización de Flujos de Trabajo):
+  - Concepto Clave: "Pasos" que se conectan. Trigger -> Acción -> Filtro.
+  - Lección para LifeBit: La idea de "conectar" bloques es potente. En nuestro motor de reglas, un bloque "SI..." se conectará a un bloque "ENTONCES...".
+- Notion / Trello (Organización de Contenido):
+  - Concepto Clave: Arrastrar "tarjetas" o "bloques" entre diferentes "contenedores" (listas, columnas).
+  - Lección para LifeBit: La librería dnd-kit es la que mejor soporta este tipo de interacción, con una accesibilidad y un rendimiento superiores.
+- Webflow / Framer (Diseño Visual):
+  - Concepto Clave: Una "paleta" de componentes a la izquierda y un "lienzo" a la derecha.
+  - Lección para LifeBit: Este es el layout visual que adoptaremos. Es intuitivo y separa claramente las "herramientas" del "área de trabajo".
+- Scratch (Programación para Niños):
+  - Concepto Clave: Bloques de Lego que solo encajan si son compatibles (ej. un bloque redondo no encaja en un hueco cuadrado).
+  - Lección para LifeBit: Esta es la clave para hacerlo "super pero super fácil". Nuestra interfaz puede dar pistas visuales (colores, formas) para guiar al usuario. Por ejemplo, los bloques de "Condición" (SI...) podrían ser azules y los de "Acción" (ENTONCES...) verdes, y solo se pueden poner en las zonas correspondientes.
+
+
+
+

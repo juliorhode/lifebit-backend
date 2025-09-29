@@ -92,3 +92,87 @@
 *   `[ ]` **VISTA-C-04: [Elecciones]** - Construir las vistas para el registro de candidaturas y la emisión de votos.
 *   `[ ]` **VISTA-C-05: [Reservas]** - Construir el componente de calendario y el flujo de solicitud de reservas.
 *   `[ ]` **VISTA-C-06: [Motor de Reglas]** - (La más compleja) Construir la interfaz drag-and-drop para la creación de reglas.
+
+
+
+Roadmap Maestro del Frontend de LifeBit (v2.0 - Consolidado)
+Nuestra Estrella Polar: "Construir la plataforma SaaS más intuitiva, potente y adictiva para la gestión de condominios, transformando tareas complejas en experiencias simples y gratificantes."
+Documento Fundacional: Este roadmap se rige por nuestro Manifiesto de Diseño y Experiencia de LifeBit, que prioriza el modo oscuro, la psicología del comportamiento, el benchmarking de aplicaciones de clase mundial y la internacionalización (i18n).
+Leyenda de Tareas:
+[CORE]: Tarea de Arquitectura o Fundación.
+[UI/UX]: Tarea centrada en la Interfaz o Experiencia de Usuario.
+[LÓGICA]: Tarea centrada en la gestión de estado y comunicación con la API.
+[PÁGINA]: Creación de una vista principal.
+[COMPONENTE]: Creación de un bloque de UI reutilizable.
+
+Leyenda de Estado:
+[x]: Tarea Completada
+[~]: Tarea en Progreso o Parcialmente Completada
+[ ]: Tarea Pendiente
+
+Epopeya F0: La Plataforma de Lanzamiento (Fundación y Arquitectura)
+Objetivo: Forjar el esqueleto de nuestra aplicación. La base invisible pero indestructible sobre la que construiremos todo lo demás.
+[ ] F0-01 [CORE]: Definir el Manifiesto de Diseño y Experiencia de LifeBit.
+[ ] Paleta de colores (Modo Oscuro y Claro).
+[ ] Escala tipográfica y de espaciado.
+[ ] Set de iconografía y tono de voz.
+[ ] F0-02 [CORE]: Configurar la librería de internacionalización (i18next) para soporte es/en.
+[ ] F0-03 [LÓGICA]: Crear el apiService definitivo con axios, incluyendo withCredentials: true y el interceptor de accessToken.
+[ ] F0-04 [UI/UX]: Construir el LayoutPrincipal adaptable (Header/Sidebar) que cambia según el rol del usuario (dueño, admin, residente).
+[ ] F0-05 [UI/UX]: Refactorizar y perfeccionar el componente ThemeToggle para el cambio de tema.
+[ ] F0-06 [CORE]: Configurar el App.jsx con el BrowserRouter y la estructura de rutas principal.
+
+Epopeya F1: La Puerta de Entrada (Autenticación y Vistas Públicas)
+Objetivo: Crear un flujo de acceso y onboarding impecable, seguro y persistente para todos los roles.
+[~] F1-01 [LÓGICA]: Construir el authStore de Zustand con toda la lógica de estado (login, logout, refreshToken, getProfile).
+[ ] F1-02 [COMPONENTE]: Construir el SessionVerifier para restaurar la sesión del usuario al recargar la página.
+[ ] F1-03 [CORE]: Implementar el componente RutaProtegida para blindar las vistas privadas.
+[~] F1-04 [PÁGINA]: Conectar y finalizar la LoginPage (lógica de estado, errores, carga).
+[ ] F1-05 [PÁGINA]: Construir la FinalizarRegistroPage para usuarios invitados por token.
+[ ] F1-06 [PÁGINA]: Construir el flujo de recuperación de cuenta (ForgotPasswordPage y ResetPasswordPage).
+[ ] F1-07 [PÁGINA]: Construir la AuthCallbackPage para el login con Google.
+[ ] F1-08 [PÁGINA]: Construir y conectar la LandingPage con su SolicitudForm.
+
+Epopeya F2: El Centro de Comando (Panel del Dueño)
+Objetivo: Empoderarte, Julio, con las herramientas para dirigir tu negocio con total control y visibilidad.
+[ ] F2-01 [PÁGINA]: Construir el DashboardPrincipal del Dueño (Notificaciones, Resumen de Edificios, Contratos a Vencer).
+[ ] F2-02 [PÁGINA]: Construir el DashboardFinanciero del Dueño con gráficos interactivos.
+[ ] F2-03 [PÁGINA]: Módulo de Gestión de Solicitudes (Tabla para listar, Modal para aprobar/rechazar).
+[ ] F2-04 [PÁGINA]: Módulo de Gestión de Contratos (Tabla, filtros, vista de detalle).
+[ ] F2-04a [COMPONENTE]: Formulario de "Registro de Edificio" para clientes VIP.
+[ ] F2-05 [PÁGINA]: Módulo CMS para la Landing Page con drag and drop para reordenar secciones.
+[ ] F2-06 [PÁGINA]: Herramienta de Soporte de Base de Datos (SQL Runner).
+
+Epopeya F3: El Primer Vuelo (Onboarding del Administrador)
+Objetivo: Crear una experiencia de configuración inicial tan guiada y gratificante que los nuevos administradores se sientan empoderados desde el primer minuto.
+[ ] F3-01 [COMPONENTE]: Construir el orquestador SetupWizard que guiará todo el proceso.
+[ ] F3-02 [PÁGINA]: Paso 1: Interfaz de Creación de Unidades (usando el generador flexible).
+[ ] F3-03 [PÁGINA]: Paso 2: Módulo de Gestión de Recursos.
+[ ] F3-03a [UI/UX]: CRUD para Tipos de Recurso.
+[ ] F3-03b [UI/UX]: Interfaces para la creación de inventario (secuencial y carga masiva por Excel).
+[ ] F3-04 [PÁGINA]: Paso 3: Módulo de Invitación de Residentes (individual y carga masiva por Excel).
+
+Epopeya F4: La Comunidad Viva (Paneles de Admin y Residente)
+Objetivo: Construir las herramientas del día a día que hacen de LifeBit el centro neurálgico de la comunidad.
+[ ] F4-01 [PÁGINA]: Construir el DashboardPrincipal del Administrador.
+[ ] F4-02 [PÁGINA]: Construir el DashboardPrincipal del Residente.
+[ ] F4-03 [PÁGINA]: Módulo de Discusiones (Foro Social v1).
+[ ] F4-03a [UI/UX]: Vista de hilos y respuestas anidadas.
+[ ] F4-03b [LÓGICA]: Implementación de Reacciones (likes).
+[ ] F4-03c [LÓGICA]: Sistema de notificaciones multicanal para respuestas.
+[ ] F4-04 [PÁGINA]: Módulo de Elecciones v1.
+[ ] F4-04a [UI/UX]: Interfaz para postulación de candidatos.
+[ ] F4-04b [UI/UX]: Interfaz de votación.
+[ ] F4-04c [UI/UX]: Vista de resultados.
+[ ] F4-05 [PÁGINA]: Módulo de Gestión Visual de Recursos (Vista de "Puestos").
+[ ] F4-06 [PÁGINA]: Sistema de Reportes/Ticketing (vistas para Residente, Admin y Dueño).
+[ ] F4-07 [PÁGINA]: Flujo de Pagos y Conciliación (vistas para Residente, Admin y Dueño).
+
+Epopeya F5: El Corazón de LifeBit (Motor de Reglas Visual)
+Objetivo: Implementar nuestra killer feature. La herramienta que nos define y nos diferencia de forma radical.
+[ ] F5-01 [LÓGICA]: (Fase 1 - MVP Funcional) Implementar las reglas más comunes a través de formularios simples para entregar valor rápidamente.
+[ ] F5-02 [UI/UX]: (Fase 2 - La Revolución Visual) Construir la interfaz drag and drop.
+[ ] F5-02a [COMPONENTE]: Paleta de bloques de Condiciones y Acciones.
+[ ] F5-02b [COMPONENTE]: Lienzo para la construcción de reglas.
+[ ] F5-02c [LÓGICA]: Motor de Simulación para previsualizar el impacto de una regla.
+[ ] F5-02d [UI/UX]: Asistente guiado (tour interactivo) para la creación de la primera regla.

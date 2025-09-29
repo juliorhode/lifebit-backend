@@ -20,7 +20,7 @@ const fileFilter = (req, file, cb) => {
         // Aceptar el archivo
         cb(null, true);
     } else {
-        // Rechazar el archivo  
+        // Rechazar el archivo
         const error = new AppError('Tipo de archivo no permitido. Solo se aceptan archivos de Excel (.xlsx, .xls).', 400);
         cb(error, false);
 

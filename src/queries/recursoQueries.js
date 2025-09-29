@@ -65,9 +65,33 @@ const ACTUALIZA_ASIGNACIONES_MASIVO = `
         ra.id = v.id_recurso::int; 
 `;
 
+
 //NOTA:
 // Todas las queries incluyen AND id_edificio = $
 // Esto es crucial para asegurar que un administrador del Edificio A nunca pueda ver, editar o borrar accidentalmente los tipos de recurso del Edificio B.
+
+/**
+ * @description Obtiene todos los recursos asignados de un tipo específico.
+ * @param {number} idTipoRecurso - ID del tipo de recurso
+ * @returns {Array} Lista de recursos con información de asignación
+ */
+const OBTENER_RECURSOS_POR_TIPO = `
+    SELECT
+        ra.id,
+        ra.identificador_unico,
+        ra.id_unidad,
+        u.numero_unidad as nombre_unidad_propietaria,
+        re.nombre as tipo_recurso,
+        CASE
+            WHEN ra.id_unidad IS NOT NULL THEN 'ocupado'
+            ELSE 'disponible'
+        END as estado
+    FROM recursos_asignados ra
+    JOIN recursos_edificio re ON ra.id_recurso_edificio = re.id
+    LEFT JOIN unidades u ON ra.id_unidad = u.id
+    WHERE re.id = $1
+    ORDER BY ra.identificador_unico
+`;
 
 module.exports = {
 	OBTENER_TIPOS_RECURSO_POR_EDIFICIO,
@@ -80,4 +104,5 @@ module.exports = {
 	OBTENER_IDS_UNIDADES_POR_EDIFICIO,
 	OBTENER_IDS_RECURSOS_ASIGNADOS_POR_EDIFICIO,
 	ACTUALIZA_ASIGNACIONES_MASIVO,
+	OBTENER_RECURSOS_POR_TIPO,
 };

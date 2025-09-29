@@ -5,7 +5,6 @@ const usuarioQueries = require('../../queries/usuarioQueries');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const tokenUtils = require('../../utils/tokenUtils');
-const emailService = require('../../services/emailService');
 const trabajoQueries = require('../../queries/trabajoQueries');
 const format = require('pg-format');
 const AppError = require('../../utils/appError');
@@ -39,7 +38,7 @@ const register = async (req, res, next) => {
 			// })
 		}
 
-		// Me gusta mas en el cath, ya que no consulto a la base de datos para eso sino que aprovecho el error
+		// Me gusta mas en el catch, ya que no consulto a la base de datos para eso sino que aprovecho el error
 		// const usuarioExists = await db.query(queries.USUARIO_EXISTE, [email])
 		// if (usuarioExists.rows.length > 0) {
 		// 	return next(
@@ -141,6 +140,25 @@ const login = async (req, res, next) => {
 		next(error);
 	}
 };
+
+/**
+ * @description Cierra la sesión del usuario invalidando la refreshToken cookie.
+ * @route POST /api/auth/logout
+ * @access Private
+ */
+const logout = (req, res, next) => {
+	// Le decimos al navegador que borre la cookie 'refreshToken'.
+	// Lo hacemos enviando una cookie con el mismo nombre, un valor vacío
+	// y una fecha de expiración inmediata (maxAge: 0).
+	res.cookie('refreshToken', '', {
+		httpOnly: true,
+		expires: new Date(0), // Expira inmediatamente.
+	});
+	res.status(200).json({
+		success: true,
+		message: 'Cierre de sesión exitoso',
+	});
+}
 
 /**
  * @description Obtiene el perfil del usuario actualmente autenticado.
@@ -508,4 +526,5 @@ module.exports = {
 	resetPassword,
 	updatePassword,
 	googleCallback,
+	logout,
 };

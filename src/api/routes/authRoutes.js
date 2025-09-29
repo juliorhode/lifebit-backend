@@ -12,6 +12,10 @@ router.post('/registro', authController.register);
 // POST /api/auth/login
 router.post('/login', authController.login);
 
+// ruta de logout
+// POST /api/auth/logout
+router.post('/logout', protegeRuta, authController.logout);
+
 // No necesita protección, ya que su "protección" es la validez del propio refreshToken
 // POST /api/auth/refresh-token
 router.post('/refresh-token', authController.refreshToken);

@@ -9,7 +9,7 @@ const CREA_USUARIO = `
 /**
  * @description verifica si el usuario ya existe
  */
-const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefono, cedula from usuarios where email = $1`;
+const USUARIO_EXISTE = `select id, nombre, apellido, email, contraseña, telefono, cedula, rol from usuarios where email = $1`;
 
 /**
  * @description Obtiene los datos de un usuario para la autenticación y

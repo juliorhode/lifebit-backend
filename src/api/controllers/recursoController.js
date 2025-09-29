@@ -545,7 +545,7 @@ const obtenerRecursosPorTipo = async (req, res, next) => {
 		// No necesitamos validar el idEdificio aquí porque la query ya lo hace implícitamente
 
 		const { rows: recursos } = await db.query(
-			unidadQueries.OBTENER_RECURSOS_POR_TIPO,
+			recursoQueries.OBTENER_RECURSOS_POR_TIPO,
 			[idTipo]
 		);
 
