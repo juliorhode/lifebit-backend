@@ -169,6 +169,8 @@ const obtenerPerfil = (req, res, next) => {
 	// Gracias a nuestro middleware 'protegerRuta', el objeto 'req'
 	// ahora contiene la información del usuario en 'req.user'.
 	// No necesitamos buscarlo en la base de datos de nuevo aquí.
+	console.log('Avatar URL del usuario:', req.user);
+	
 
 	res.status(200).json({
 		success: true,
@@ -445,51 +447,116 @@ const updatePassword = async (req, res, next) => {
 };
 
 /**
- * @description Maneja el callback de Google OAuth. Vincula la cuenta de Google
- * a un usuario invitado existente o loguea a un usuario ya vinculado.
+ * @description Maneja el callback de Google OAuth. Este es el "cerebro" central que
+ * determina qué acción realizar (Login, Vinculación o Activación) basándose en el
+ * estado del usuario en la base de datos.
  * @route GET /api/auth/google/callback
  */
 const googleCallback = async (req, res, next) => {
 	try {
+		// 1. OBTENER PERFIL DE GOOGLE
+		// Passport.js, tras una autenticación exitosa con Google, adjunta el perfil
+		// del usuario al objeto `req.user`.
 		const perfilGoogle = req.user;
+
+		// Guarda de seguridad: si por alguna razón no hay perfil, redirigimos con error.
 		if (!perfilGoogle) {
-			// Esto no debería pasar si Passport funcionó, pero es una guarda de seguridad.
 			return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth-failed`);
 		}
 
+		// Extraemos los datos clave que usaremos para la lógica de negocio.
 		const email = perfilGoogle.emails[0].value;
 		const googleId = perfilGoogle.id;
+		// Extraemos la URL de la foto. 
+		// Algunas cuentas de Google pueden no tener foto.
+		// El perfilGoogle.photos es un array, tomamos el primer elemento si existe.
+		// Si no existe, asignamos null.
+		// Ejemplo de perfilGoogle.photos: [ { value: 'https://lh3.googleusercontent.com/a-/AOh14Gg...' } ]
+		// Usamos un operador ternario para manejar ambos casos.
+		// Si photos existe y tiene al menos un elemento, usamos su valor. Si no, null.
+		// Esto previene errores si el usuario no tiene foto en su cuenta de Google.
+		const avatarUrl = perfilGoogle.photos && perfilGoogle.photos[0] ? perfilGoogle.photos[0].value : null;
+		
+		console.log('Avatar URL del usuario:', avatarUrl);
 
-		// 1. PRIMERA PREGUNTA: ¿Es un usuario que ya conocemos por su Google ID?
-		let {
-			rows: [usuario],
+		let usuario; // Declaramos una variable 'usuario' que llenaremos en uno de los flujos.
+
+		// --- INICIO DE LA LÓGICA DE DECISIÓN DE 3 VÍAS ---
+
+		// 2. ESCENARIO 1: LOGIN DE UN USUARIO YA VINCULADO
+		// Es la primera y más común verificación. Buscamos si ya conocemos a este usuario
+		// por su identificador único de Google.
+		const {
+			rows: [usuarioPorGoogleId],
 		} = await db.query(usuarioQueries.OBTENER_USUARIO_POR_GOOGLE_ID, [googleId]);
 
-		if (usuario) {
+		if (usuarioPorGoogleId) {
+			// Si lo encontramos, es un simple login.
 			console.log(`Flujo de LOGIN con Google para: ${email}`);
+			usuario = usuarioPorGoogleId;
 		} else {
-			// 2. SEGUNDA PREGUNTA: Si no, ¿es un usuario invitado con ese email?
-			let {
-				rows: [usuarioInvitado],
-			} = await db.query(usuarioQueries.OBTENER_INVITADO_POR_EMAIL, [email]);
+			// Si no lo encontramos por su Google ID, podría ser un usuario tradicional o un invitado.
 
-			if (!usuarioInvitado) {
-				// Si no es ninguno de los dos, no puede entrar.
-				return res.redirect(`${process.env.FRONTEND_URL}/login?error=invitation-not-found`);
-			}
-
-			// ¡Sí es! Lo activamos y vinculamos su Google ID.
-			console.log(`Flujo de ACTIVACIÓN con Google para: ${email}`);
+			// 3. ESCENARIO 2: VINCULACIÓN DE UNA CUENTA TRADICIONAL EXISTENTE
+			// Buscamos si existe un usuario ACTIVO con este email que aún no tenga un google_id.
 			const {
-				rows: [usuarioActualizado],
-			} = await db.query(usuarioQueries.ACTIVAR_Y_VINCULAR_GOOGLE, [
-				googleId,
-				usuarioInvitado.id,
-			]);
-			usuario = usuarioActualizado;
+				rows: [usuarioTradicional],
+			} = await db.query(usuarioQueries.OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE, [email]);
+
+			if (usuarioTradicional) {
+				// Si lo encontramos, significa que un usuario con contraseña quiere vincular su cuenta.
+				console.log(`Flujo de VINCULACIÓN para cuenta tradicional: ${email}`);
+				// Actualizamos su registro para añadirle el google_id.
+				const {
+					rows: [usuarioActualizado],
+				} = await db.query(usuarioQueries.VINCULAR_GOOGLE_ID, [
+					googleId,
+					avatarUrl,
+					usuarioTradicional.id,
+				]);
+				usuario = usuarioActualizado;
+			} else {
+				// Si tampoco es un usuario tradicional, solo queda una opción...
+
+				// 4. ESCENARIO 3: ACTIVACIÓN DE UNA CUENTA INVITADA
+				// Buscamos si existe un usuario INVITADO con este email.
+				const {
+					rows: [usuarioInvitado],
+				} = await db.query(usuarioQueries.OBTENER_INVITADO_POR_EMAIL, [email]);
+
+				if (!usuarioInvitado) {
+					// Si llegamos aquí, el usuario es un completo desconocido. No tiene cuenta,
+					// ni tradicional ni invitada. No puede acceder.
+					return res.redirect(
+						`${process.env.FRONTEND_URL}/login?error=account-not-found`
+					);
+				}
+
+				// Si lo encontramos, es una activación.
+				console.log(`Flujo de ACTIVACIÓN con Google para: ${email}`);
+				// Actualizamos su registro para activarlo Y vincular su google_id.
+				const {
+					rows: [usuarioActualizado],
+				} = await db.query(usuarioQueries.ACTIVAR_Y_VINCULAR_GOOGLE, [
+					googleId,
+					avatarUrl,
+					usuarioInvitado.id,
+				]);
+				usuario = usuarioActualizado;
+			}
 		}
 
-		// --- PUNTO COMÚN: GENERAR TOKENS Y REDIRIGIR ---
+		// --- PUNTO DE CONTROL FINAL ---
+		// Después de cualquiera de los 3 flujos exitosos, debemos tener un objeto 'usuario' válido.
+		// Verificamos que no esté suspendido.
+		if (!usuario || usuario.estado !== 'activo') {
+			return res.redirect(
+				`${process.env.FRONTEND_URL}/login?error=account-inactive-or-suspended`
+			);
+		}
+
+		// --- 5. GENERACIÓN DE SESIÓN DE LIFEBIT ---
+		// Creamos el payload para nuestros propios tokens JWT.
 		const payload = {
 			id: usuario.id,
 			rol: usuario.rol,
@@ -497,21 +564,20 @@ const googleCallback = async (req, res, next) => {
 		};
 		const { accessToken, refreshToken } = generaTokens(payload);
 
-		// Enviamos el refreshToken como una cookie segura.
+		// Enviamos el refreshToken en una cookie segura.
 		res.cookie('refreshToken', refreshToken, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'strict',
-			maxAge: 7 * 24 * 60 * 60 * 1000,
+			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
 		});
 
-		// REDIRIGIMOS al frontend a una ruta especial de callback.
-		// El frontend, en esta ruta, tomará el token de la URL, lo guardará,
-		// y luego redirigirá al usuario al dashboard.
+		// Finalmente, redirigimos al usuario al frontend, a una ruta de callback
+		// especial, pasándole el accessToken en la URL para que lo guarde.
 		return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}`);
 	} catch (error) {
-		// En caso de un error de servidor, podemos redirigir a una página de error genérica.
-		console.error('Error en googleCallback:', error);
+		// Capturamos cualquier error inesperado del servidor.
+		console.error('Error catastrófico en googleCallback:', error);
 		return res.redirect(`${process.env.FRONTEND_URL}/login?error=server-error`);
 	}
 };

@@ -93,25 +93,49 @@ const ACTUALIZAR_CONTRASENA = `
 const OBTENER_USUARIO_POR_GOOGLE_ID = `SELECT * FROM usuarios WHERE google_id = $1;`;
 
 /**
- * @description Obtiene un usuario con estado 'invitado' por su email.
- * Usado para el flujo de activación de cuenta con Google.
+ * @description Obtiene un usuario ACTIVO por su email que aún NO ha vinculado Google. Para vinculaciones.
  */
-const OBTENER_INVITADO_POR_EMAIL = `SELECT * FROM usuarios WHERE email = $1 AND estado = 'invitado';`;
+const OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE = `
+    SELECT * FROM usuarios WHERE email = $1 AND estado = 'activo' AND google_id IS NULL;
+`;
 
 /**
- * @description Activa a un usuario invitado y vincula su google_id.
+ * @description Vincula un google_id y actualiza el avatar de una cuenta existente.
+ */
+const VINCULAR_GOOGLE_ID = `
+    UPDATE usuarios
+        SET
+            google_id = $1,
+            avatar_url = $2,
+            fecha_actualizacion = NOW()
+    WHERE id = $3
+    RETURNING *;
+`;
+
+/**
+ * @description Obtiene un usuario con estado 'invitado' por su email,
+ * pero SOLO si su token de invitación no ha expirado.
+ */
+const OBTENER_INVITADO_POR_EMAIL = `
+    SELECT * FROM usuarios 
+    WHERE email = $1 AND estado = 'invitado' AND token_registro_expira > NOW();
+`;
+
+/**
+ * @description Activa a un usuario invitado y vincula su google_id y actualiza su avatar.
  * Se usa después de una activación exitosa con Google.
  */
 const ACTIVAR_Y_VINCULAR_GOOGLE = `
     UPDATE usuarios 
     SET 
-        google_id = $1, 
+        google_id = $1,
+        avatar_url = $2,
         estado = 'activo',
         contraseña = NULL,
         token_registro = NULL, 
         token_registro_expira = NULL,
         fecha_actualizacion = NOW()
-    WHERE id = $2 
+    WHERE id = $3 
     RETURNING *;
 `;
 
@@ -131,5 +155,6 @@ module.exports = {
     OBTENER_USUARIO_POR_GOOGLE_ID,
     OBTENER_INVITADO_POR_EMAIL,
     ACTIVAR_Y_VINCULAR_GOOGLE,
-
+    VINCULAR_GOOGLE_ID,
+    OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
 }
