@@ -2,6 +2,7 @@
  * @description Multi Proposito: El dueño crea al usuario administrador que se obtiene de todas las solicitudes pendientes de aprobación. El administrador crea el usuario para el residente. Esto es para el pre-registro insertando un nuevo usuario con estado 'invitado'
  */
 const CREA_USUARIO_INVITADO = `insert into usuarios (nombre,apellido,email,telefono,cedula,id_edificio_actual,estado,token_registro,token_registro_expira,rol,id_unidad_actual ) values($1, $2, $3, $4, $5, $6, 'invitado', $7, $8, $9, $10) returning id, nombre, email`;
+
 /**
  * @description Plantilla para la inserción masiva de usuarios.
  * %L será reemplazado por pg-format con una lista de valores.
@@ -14,11 +15,13 @@ const CREA_USUARIOS_MASIVO = `
         rol, id_unidad_actual, estado
     ) VALUES %L;
 `;
+
 /**
  * @description Busca un usuario por su token de registro hasheado y verifica que no haya expirado.
 ::varchar Es un "type cast" en PostgreSQL. Le estamos diciendo explícitamente: "PostgreSQL, quiero que trates el parámetro $1 como si fuera un VARCHAR, sin ninguna duda ni ambigüedad". Esto previene que el planificador de consultas se confunda.
  */
 const OBTENER_INVITADO_POR_TOKEN = `SELECT * FROM usuarios WHERE token_registro = $1 AND token_registro_expira > NOW()`;
+
 /**
  * @description Activa al usuario: establece la contraseña, cambia el estado y limpia los tokens.
  */
@@ -39,18 +42,21 @@ const GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA = `
     SELECT email, cedula FROM usuarios 
     WHERE email = ANY($1::varchar[]) OR (cedula IS NOT NULL AND cedula = ANY($2::varchar[]));
 `;
+
 /**
  * @description Busca a un usuario activo por su dirección de email.
  */
 const OBTENER_USUARIO_ACTIVO_POR_EMAIL = `
     SELECT id, nombre, apellido, email FROM usuarios WHERE email = $1 AND estado = 'activo';
 `;
+
 /**
  * @description Guarda el token de reseteo de contraseña y su expiración para un usuario.
  */
 const GUARDAR_TOKEN_RESETEO = `
     UPDATE usuarios SET token_reseteo_pass = $1, token_reseteo_expira = $2 WHERE id = $3;
 `;
+
 /**
  * @description Busca un usuario por un token de reseteo válido.
  */
@@ -79,8 +85,23 @@ const OBTENER_CONTRASENA_POR_ID = `SELECT contraseña FROM usuarios WHERE id = $
 const ACTUALIZAR_CONTRASENA = `
     UPDATE usuarios SET contraseña = $1, fecha_actualizacion = NOW() WHERE id = $2;
 `;
+
+/**
+ * @description Obtiene un usuario por su google_id único.
+ * Usado para el flujo de login con Google.
+ */
 const OBTENER_USUARIO_POR_GOOGLE_ID = `SELECT * FROM usuarios WHERE google_id = $1;`;
+
+/**
+ * @description Obtiene un usuario con estado 'invitado' por su email.
+ * Usado para el flujo de activación de cuenta con Google.
+ */
 const OBTENER_INVITADO_POR_EMAIL = `SELECT * FROM usuarios WHERE email = $1 AND estado = 'invitado';`;
+
+/**
+ * @description Activa a un usuario invitado y vincula su google_id.
+ * Se usa después de una activación exitosa con Google.
+ */
 const ACTIVAR_Y_VINCULAR_GOOGLE = `
     UPDATE usuarios 
     SET 
