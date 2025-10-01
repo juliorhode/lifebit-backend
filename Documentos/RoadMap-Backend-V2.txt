@@ -42,11 +42,12 @@
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
+*   `[ ]` **AUTH-13:** Implementar flujo seguro de cambio de email (con verificación).
 * Epopeya AUTH-B: Gestión de Perfil de Usuario
-*    [ ] PERFIL-01: Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
-*    [ ] PERFIL-02: Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
-*    [ ] PERFIL-03: Flujo para vincular una cuenta de Google a una cuenta activa.
-*    [ ] PERFIL-04: Flujo para desvincular una cuenta de Google.
+*    `[ ]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
+*    `[ ]` **PERFIL-02:** Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
+*    `[x]` **PERFIL-03:** Flujo para vincular una cuenta de Google a una cuenta activa.
+*    `[ ]` **PERFIL-04:** Flujo para desvincular una cuenta de Google.
 
 # =================================================================================
 # ||     Epopeya 2: Panel del Dueño (Gestión del SaaS)     `[EN PROGRESO]`         ||

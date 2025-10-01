@@ -139,6 +139,13 @@ const ACTIVAR_Y_VINCULAR_GOOGLE = `
     RETURNING *;
 `;
 
+/**
+ * @description Desvincula la cuenta de Google de un usuario estableciendo google_id a NULL.
+ */
+const DESVINCULAR_GOOGLE_ID = `
+    UPDATE usuarios SET google_id = NULL, fecha_actualizacion = NOW() WHERE id = $1 RETURNING id, google_id;
+`;
+
 module.exports = {
     CREA_USUARIO_INVITADO,
     OBTENER_INVITADO_POR_TOKEN,
@@ -155,6 +162,7 @@ module.exports = {
     OBTENER_USUARIO_POR_GOOGLE_ID,
     OBTENER_INVITADO_POR_EMAIL,
     ACTIVAR_Y_VINCULAR_GOOGLE,
+    DESVINCULAR_GOOGLE_ID,
     VINCULAR_GOOGLE_ID,
     OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
 }
