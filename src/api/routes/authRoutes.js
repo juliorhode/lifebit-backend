@@ -20,10 +20,6 @@ router.post('/logout', protegeRuta, authController.logout);
 // POST /api/auth/refresh-token
 router.post('/refresh-token', authController.refreshToken);
 
-// Ruta de temporal para ruta protegida
-// GET api/auth/perfil
-router.get('/perfil', protegeRuta, authController.obtenerPerfil);
-
 // Ruta para activacion de cuenta
 // POST /api/auth/finalizar-registro
 router.post('/finalizar-registro', authController.finalizarRegistro);

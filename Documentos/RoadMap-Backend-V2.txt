@@ -42,7 +42,11 @@
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
-*   `[ ]` **AUTH-13:** Implementar flujo seguro de cambio de email (con verificación).
+*   `[ ]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo)..
+*   `[ ]` **AUTH-14 (Seguridad):** Implementar Protección contra Fuerza Bruta.
+    *   `[ ]` Instalar y configurar express-rate-limit en el endpoint de login.
+    *   `[ ]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.
+    *   `[ ]` Añadir validación de fortaleza de contraseña en el backend.
 * Epopeya AUTH-B: Gestión de Perfil de Usuario
 *    `[ ]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
 *    `[ ]` **PERFIL-02:** Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
@@ -55,11 +59,13 @@
 # || Objetivo: Dar al Dueño las herramientas para gestionar el negocio.          ||
 # ---------------------------------------------------------------------------------
 *   `[x]` **OWNER-01:** Flujo de Onboarding de Clientes (Recibir, Listar y Aprobar Solicitudes).
-*   `[~]` **OWNER-02:** Gestión de Edificios (Creación implementada, pendiente Leer/Actualizar/Borrar).
+*   `[ ]` **OWNER-02:** Gestión de Edificios (Creación implementada, pendiente Leer/Actualizar/Borrar).
+    *   `[ ]` **OWNER-02.1:** Implementar el CRUD completo para Edificios (GET, PATCH, DELETE).
 *   `[ ]` **OWNER-03:** CRUD completo para Licencias (`/api/dueño/licencias`).
 *   `[ ]` **OWNER-04:** Dashboard del Dueño (Endpoints de agregación para métricas).
 *   `[ ]` **OWNER-05:** Módulo de Noticias Globales.
 *   `[ ]` **OWNER-06:** Herramienta de Soporte Nivel 2 (SQL Runner).
+*   `[ ]` **OWNER-07:** Módulo CMS Landing Page (Endpoints CRUD para gestionar contenido y estructura de la página principal).
 
 # =================================================================================
 # ||     Epopeya 3: Panel del Administrador (Configuración)     `[COMPLETADA]`   ||
@@ -106,25 +112,52 @@
 *   `[ ]` **SUPPORT-02:** Gestión de Cartas y Documentos (Solicitud y Emisión).
 *   `[ ]` **AUTO-01:** Motor de Reglas (CRUD y `RuleEngineService`).
 *   `[ ]` **AUTO-02:** Módulo de Auditoría (`AuditService` y registro de acciones).
+*   `[ ]` **AUTO-03 (Mejora):** Extender el motor de generación de unidades para soportar placeholders de contador global ({c}, {C}, etc.) (ADR-007).
 
+# =================================================================================
+# ||     Epopeya 7: Panel del Residente     `[PENDIENTE]`                       ||
+# =================================================================================
+# || Objetivo: Proporcionar al Residente todas las herramientas necesarias para  ||
+# ||           gestionar su participación en el condominio.                      ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **RESIDENTE-01:** Dashboard - Endpoint de agregación para la vista principal del residente.
+*   `[ ]` **RESIDENTE-02:** Módulo Pagos - Endpoint para reportar pagos de condominio o reserva.
+*   `[ ]` **RESIDENTE-03:** Módulo Reservas - CRUD para solicitar, ver y cancelar reservas de áreas comunes.
+*   `[ ]` **RESIDENTE-04:** Módulo Votaciones/Encuestas - Endpoint para emitir votos/respuestas.
+*   `[ ]` **RESIDENTE-05:** Módulo Discusiones - Utilizar endpoints del foro para participar.
+*   `[ ]` **RESIDENTE-06:** Módulo Elecciones - Endpoints para postularse y emitir votos.
+*   `[ ]` **RESIDENTE-07:** Módulo Solicitud de Cartas - Endpoint para solicitar documentos.
+*   `[ ]` **RESIDENTE-08:** Módulo Reporte de Incidencias - Endpoint para reportar problemas al administrador.
 
+# =================================================================================
+# ||     Epopeya 8: Seguridad Avanzada y Hardening     `[PENDIENTE]`             ||
+# =================================================================================
+# || Objetivo: Reforzar la postura de seguridad más allá de lo básico.           ||
+# ---------------------------------------------------------------------------------
+*   `[ ]` **SEC-01 (Hardening):** Cabeceras de Seguridad HTTP (helmet).
+*   `[ ]` **SEC-02 (Anti-Fuerza Bruta):** Limitación de Tasa y Bloqueo de Cuentas (express-rate-limit).
+*   `[ ]` **SEC-03 (2FA/OTP):** Verificación por SMS (Twilio).
+*   `[ ]` **SEC-04 (XSS):** Saneamiento de Contenido Enriquecido (sanitize-html).
 
 # =================================================================================
 # ||     Epopeya 9 (Futura): Mantenimiento y Escalabilidad     `[PENDIENTE]`     ||
 # =================================================================================
 # || Objetivo: Realizar mejoras técnicas y preparar la aplicación para el crecimiento. ||
 # ---------------------------------------------------------------------------------
-*   `[ ]` **MAINT-01 (Refactor): Migrar el Servicio de Email a Amazon SES.**
+*   `[ ]` **MAINT-01 (Refactor):** Migrar el Servicio de Email a Amazon SES.
     *   `[ ]` Obtener y configurar credenciales de AWS SES.
     *   `[ ]` Refactorizar 'emailService.js' para usar el SDK de AWS.
     *   `[ ]` Adaptar la construcción del 'payload' al formato requerido por SES.
     *   `[ ]` Actualizar las variables de entorno en producción.
-*   `[ ]` **MAINT-02 (Refactor): Implementar el modelo de 'afiliaciones' (ADR-001).**
+*   `[ ]` **MAINT-02 (Refactor):** Implementar el modelo de 'afiliaciones' (ADR-001).
 
 
 
 
 
+# =================================================================================
+# ||     ADRs (Architecture Decision Records)     ||
+# =================================================================================
 
 ADR-007: Introducción de Placeholders de Contador Global
 Título: ADR-007: Introducción de Placeholders de Contador Global para el Generador de Unidades
@@ -146,3 +179,31 @@ Consecuencias:
 Backend: Se requiere una modificación en el servicio de generación de unidades para implementar la lógica del nuevo contador y los nuevos reemplazos de placeholders.
 Frontend: El desarrollo de la interfaz de usuario para los bloques de "Contador Global" queda bloqueado hasta que el backend implemente esta funcionalidad. Podemos construir la UI de forma aislada, pero la integración final dependerá de este cambio en la API.
 Beneficios: Esta mejora transformará el generador de una herramienta específica para edificios a una herramienta de generación de secuencias genérica y mucho más potente, ampliando significativamente los tipos de propiedades que LifeBit puede gestionar "listo para usar".
+
+ADR-008: Reorganización y Corrección del Roadmap V2
+Título: ADR-008: Reorganización y Corrección del Roadmap V2 para Alinear con Linear Local
+Fecha: 2025-10-01
+Estado: Implementado
+Contexto:
+Durante la integración con Linear Local (`gestion_proyectos_local.md`), se identificaron inconsistencias en la numeración de epopeyas, duplicados en tareas de seguridad, y falta de alineación con asignaciones de IA y estándares de AGENTS.md.
+Problema:
+El roadmap V2 tenía numeración inconsistente (Epopeya 2 como Seguridad en lugar de Panel Dueño), duplicados (SEC-02 similar a AUTH-14, MAINT-03 similar a SEC-03), y no coincidía con las epics en Linear Local (EPIC-001 a EPIC-009).
+Decisión:
+Se decidió reorganizar el roadmap para:
+- Alinear numeración de epopeyas con Linear Local (Epopeya 0-9).
+- Mover seguridad avanzada a Epopeya 8.
+- Eliminar duplicados e integrar elementos repetidos.
+- Asegurar consistencia con diffs aplicados, asignaciones IA y protocolos de AGENTS.md.
+Funcionalidades Reorganizadas:
+- Epopeya 2: Panel del Dueño (mantenido).
+- Epopeya 3: Panel Admin (renumerado).
+- Epopeya 4: Núcleo Financiero (renumerado).
+- Epopeya 5: Comunidad (renumerado).
+- Epopeya 6: Soporte y Automatización (renumerado, incluye auditoría).
+- Epopeya 7: Panel Residente (renumerado).
+- Epopeya 8: Seguridad Avanzada (nueva, consolida elementos de seguridad).
+- Epopeya 9: Mantenimiento (limpia duplicados).
+Consecuencias:
+Backend/Frontend: Requiere actualización de referencias en código y docs.
+Linear Local: Ahora coincide perfectamente con roadmap.
+Beneficios: Roadmap consistente, sin duplicados, alineado con gestión de proyectos IA y estándares de calidad.

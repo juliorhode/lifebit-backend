@@ -161,26 +161,6 @@ const logout = (req, res, next) => {
 }
 
 /**
- * @description Obtiene el perfil del usuario actualmente autenticado.
- * @route GET /api/auth/perfil
- * @access Private (requiere token)
- */
-const obtenerPerfil = (req, res, next) => {
-	// Gracias a nuestro middleware 'protegerRuta', el objeto 'req'
-	// ahora contiene la información del usuario en 'req.user'.
-	// No necesitamos buscarlo en la base de datos de nuevo aquí.
-	console.log('Avatar URL del usuario:', req.user);
-	
-
-	res.status(200).json({
-		success: true,
-		data: {
-			user: req.user,
-		},
-	});
-};
-
-/**
  * @description Genera un nuevo accessToken a partir de un refreshToken válido.
  * @route POST /api/auth/refresh-token
  * @access Public (pero requiere un refreshToken válido)
@@ -585,7 +565,6 @@ const googleCallback = async (req, res, next) => {
 module.exports = {
 	register,
 	login,
-	obtenerPerfil,
 	refreshToken,
 	finalizarRegistro,
 	forgotPassword,
