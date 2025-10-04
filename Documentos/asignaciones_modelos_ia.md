@@ -72,15 +72,3 @@ El desarrollo es guiado por un equipo de personas de IA, cada una con una especi
 
 El proyecto se adhiere a los principios de diseño de software profesional, incluyendo **SOLID**, **DRY**, **KISS** y **YAGNI**. La seguridad es la máxima prioridad, como se detalla en el `SECURITY_MANIFESTO.md`.
 
-## 4. Integración con Linear Local
-
-Los modelos de IA asignados (actualizados según leaderboard lmarena.ai) se integran con el sistema local de gestión de proyectos (`gestion_proyectos_local.md`), simulando Linear.app. Incluye alternativas gratuitas.
-
-- **Project Manager**: Claude-3.5-Sonnet (top en razonamiento). **Alternativa gratuita**: DeepSeek-V2.5. Gestiona proyectos (PROJ-001), epics y roadmaps (ROAD-001). Workspace PM-001.
-- **CEO**: GPT-4o (mejor en estrategia). **Alternativa gratuita**: GLM-4.5-Air. Define visión y prioridades. Vinculado a milestones.
-- **Marketing**: Claude-3.5-Sonnet (creatividad superior). **Alternativa gratuita**: Kimi-K2. Asigna a issues UX/UI (ej. ISSUE-045, ISSUE-053).
-- **Ciberseguridad**: DeepSeek-V2.5 (análisis detallado). **Alternativa gratuita**: DeepSeek-R1. Asigna a issues seguridad (ISSUE-019, ISSUE-063). Workspace ST-001.
-- **Alex (Backend)**: Grok-1.5 (código optimizado). **Alternativa gratuita**: Qwen3-Coder. Asigna a epics backend (EPIC-001 a EPIC-005). Workspace BT-001.
-- **Ark (Frontend)**: Qwen2-72B (JS/React especializado). **Alternativa gratuita**: Qwen3-Coder. Asigna a epics frontend (EPIC-006, EPIC-008). Workspace FT-001.
-
-**Uso**: Actualiza `gestion_proyectos_local.md` con prompts como "Asigna modelo X a issue Y". Prioriza gratuitos si top no disponibles.

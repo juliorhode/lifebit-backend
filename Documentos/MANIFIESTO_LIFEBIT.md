@@ -70,7 +70,9 @@ Todo el código debe adherirse a los siguientes principios de ingeniería de sof
 ## 5. Protocolos de Colaboración y Directrices
 
 **0. LA REGLA DE ORO:**
-*   **Revisar el Repositorio Primero:** Antes de cualquier sesión de trabajo y antes de proponer cualquier código, el agente de IA debe revisar el estado actual del repositorio público de GitHub para sincronizar su contexto.
+
+*   **Revisar el Proyecto Primero:** Antes de cualquier sesión de trabajo y antes de proponer cualquier código, el agente de IA debe revisar el estado actual y todo el proyecto para sincronizar su contexto. Esto incluye leer los manifiestos, el roadmap, la estructura de archivos y cualquier otro documento relevante.
+
 
 **1. Flujo de Trabajo:**
 *   **Paso a Paso (Atómico):** Nos enfocaremos en una única y pequeña tarea a la vez. No se avanzará a un nuevo paso técnico hasta recibir confirmación explícita.
@@ -80,6 +82,47 @@ Todo el código debe adherirse a los siguientes principios de ingeniería de sof
 **2. Documentación:**
 *   **Explicaciones:** Todo nuevo concepto se explicará con el Método Hexagonal y analogías.
 *   **Código:** Todo el código (funciones, queries, bloques complejos) debe estar documentado con comentarios que expliquen el "porqué".
+*   **Estructura:** Cualquier cambio en la estructura del proyecto debe ser documentado y justificado.
+*   **Decisiones Técnicas:** Cualquier decisión técnica importante debe ser documentada en un ADR (Architecture Decision Record).
 
-**3. Gestión de IA:**
-*   **Persistencia de Contexto:** Los agentes que operan en plataformas externas (como "Ark" en AI Studio) deben tener este manifiesto configurado en sus "System Instructions" para garantizar la consistencia.
+**3. Revisión y Validación:**
+*   **Confirmación Continua:** Antes de implementar cualquier cambio, el agente debe solicitar confirmación explícita.
+*   **Pruebas Manuales:** Cada endpoint del backend debe ser probado manualmente con Postman antes de avanzar.
+*   **Revisión de Código:** Se fomentará la revisión de código entre agentes para asegurar la calidad y adherencia a los principios.
+*   **Refactorización:** Se revisará y refactorizará el código regularmente para mejorar la legibilidad y mantener los estándares.
+*   **Feedback:** Se solicitará y se dará feedback constructivo regularmente para mejorar el proceso y la calidad del código.
+*   **Actualización del Manifiesto:** Este documento es vivo y se actualizará según sea necesario para reflejar nuevas decisiones, aprendizajes y mejoras en el proceso.
+*   **Comunicación Clara:** Cualquier duda o ambigüedad debe ser comunicada inmediatamente para evitar malentendidos.
+*   **Transparencia:** Todos los cambios, decisiones y discusiones deben ser documentados en el repositorio para mantener un historial claro.
+*   **Profesionalismo:** Mantener siempre un tono profesional y respetuoso en todas las interacciones y comunicaciones.
+*   **Seguridad:** Seguir estrictamente el "Manifiesto de Seguridad" para proteger los datos y la integridad del sistema.
+*   **Ética:** Asegurar que todas las prácticas de desarrollo y negocio cumplan con estándares éticos y legales.
+*   **Compromiso con la Calidad:** Priorizar la calidad del código y la experiencia del usuario sobre la velocidad de desarrollo.
+*   **Aprendizaje Continuo:** Estar abierto a aprender nuevas tecnologías, metodologías y mejores prácticas que puedan beneficiar al proyecto.
+*   **Adaptabilidad:** Ser flexible y adaptarse a cambios en los requisitos, el roadmap o las prioridades del proyecto.
+*   **Enfoque en el Usuario:** Mantener siempre al usuario final en mente, asegurando que cada decisión técnica y de diseño mejore su experiencia.
+*   **Colaboración:** Fomentar un ambiente de trabajo colaborativo donde todas las ideas y contribuciones sean valoradas.
+*   **Responsabilidad:** Cada agente es responsable de sus tareas y debe cumplir con los plazos y estándares acordados.
+*   **Innovación:** Estar abierto a nuevas ideas y enfoques que puedan mejorar el producto o el proceso de desarrollo.
+*   **Documentación Continua:** Mantener la documentación del proyecto actualizada y accesible para todos los miembros del equipo.
+*   **Uso Eficiente de Herramientas:** Aprovechar al máximo las herramientas y tecnologías disponibles para mejorar la productividad y la calidad del trabajo.
+*   **Balance entre Velocidad y Calidad:** Encontrar un equilibrio adecuado entre avanzar rápidamente y mantener altos estándares de calidad.
+*   **Celebrar Logros:** Reconocer y celebrar los hitos y logros del equipo para mantener la motivación y el compromiso.
+*   **Cultura de Mejora Continua:** Fomentar una cultura donde siempre se busque mejorar procesos, habilidades y resultados.
+*   **Claridad en los Requisitos:** Asegurar que todos los requisitos y expectativas estén claramente definidos y entendidos antes de comenzar cualquier tarea.
+*   **Gestión de Riesgos:** Identificar y mitigar riesgos potenciales en el desarrollo y la implementación del proyecto.
+*   **Sostenibilidad:** Considerar la sostenibilidad a largo plazo del código y la arquitectura del sistema.
+*   **Enfoque Modular:** Diseñar el sistema de manera modular para facilitar el mantenimiento y la escalabilidad.
+*   **Pruebas Automatizadas:** Aunque no se ha implementado un framework de testing formal, se fomentará la creación de pruebas automatizadas para asegurar la calidad del código.
+*   **Revisión de Dependencias:** Mantener las dependencias del proyecto actualizadas y seguras.
+*   **Optimización del Rendimiento:** Considerar el rendimiento en todas las etapas del desarrollo para asegurar una experiencia de usuario fluida.
+*   **Accesibilidad:** Asegurar que la plataforma sea accesible para todos los usuarios, incluyendo aquellos con discapacidades.
+*   **Internacionalización:** Considerar la posibilidad de internacionalizar la plataforma en el futuro.
+*   **Manejo de Errores:** Implementar un manejo de errores robusto y amigable para el usuario.
+*   **Monitoreo y Logging:** Implementar sistemas de monitoreo y logging para detectar y resolver problemas rápidamente.
+*   **Backups Regulares:** Asegurar que se realicen backups regulares de la base de datos y otros datos críticos.
+*   **Plan de Recuperación ante Desastres:** Tener un plan claro para la recuperación ante desastres y la continuidad del negocio.
+*   **Cumplimiento Legal:** Asegurar que la plataforma cumpla con todas las leyes y regulaciones aplicables, incluyendo GDPR y otras normativas de protección de datos. 
+*   **Ética en el Uso de IA:** Asegurar que cualquier uso de inteligencia artificial en el proyecto sea ético, transparente y respete la privacidad del usuario.
+*   **Revisión de Código Regular:** Implementar revisiones de código regulares para asegurar la calidad y adherencia a los estándares.
+*   **Documentación de Decisiones Técnicas:** Documentar todas las decisiones técnicas importantes y las razones detrás de ellas.

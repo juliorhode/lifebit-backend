@@ -51,6 +51,12 @@ const OBTENER_USUARIO_ACTIVO_POR_EMAIL = `
 `;
 
 /**
+ * @description Obtiene el registro completo de un usuario por su ID de LifeBit.
+ * Usado para obtener el estado más reciente de un usuario antes de una operación.
+ */
+const OBTENER_USUARIO_POR_ID = `SELECT * FROM usuarios WHERE id = $1;`;
+
+/**
  * @description Guarda el token de reseteo de contraseña y su expiración para un usuario.
  */
 const GUARDAR_TOKEN_RESETEO = `
@@ -165,4 +171,5 @@ module.exports = {
     DESVINCULAR_GOOGLE_ID,
     VINCULAR_GOOGLE_ID,
     OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
-}
+    OBTENER_USUARIO_POR_ID,
+};

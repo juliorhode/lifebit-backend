@@ -14,6 +14,7 @@ const solicitudRoutes = require('./api/routes/solicitudRoutes');
 const authRoutes = require('./api/routes/authRoutes');
 const dueñoRoutes = require('./api/routes/dueñoRoutes');
 const adminRoutes = require('./api/routes/adminRoutes');
+const perfilRoutes = require('./api/routes/perfilRoutes');
 
 const app = express();
 
@@ -61,6 +62,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/owner', dueñoRoutes);
 // rutas de admin
 app.use('/api/admin', adminRoutes);
+// rutas de perfil
+app.use('/api/perfil', perfilRoutes);
+
+/*********************************************************************************/
+
 
 
 // ruta de prueba de verificacion que el servidor funciona

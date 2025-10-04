@@ -130,14 +130,24 @@
 *   `[ ]` **RESIDENTE-08:** Módulo Reporte de Incidencias - Endpoint para reportar problemas al administrador.
 
 # =================================================================================
-# ||     Epopeya 8: Seguridad Avanzada y Hardening     `[PENDIENTE]`             ||
+# ||     Epopeya 7: Seguridad Avanzada y Hardening del Sistema     `[PENDIENTE]` ||
 # =================================================================================
-# || Objetivo: Reforzar la postura de seguridad más allá de lo básico.           ||
+# || Objetivo: Reforzar la postura de seguridad de LifeBit más allá de lo básico, ||
+# ||           protegiendo contra ataques avanzados y mejorando la resiliencia.  ||
 # ---------------------------------------------------------------------------------
-*   `[ ]` **SEC-01 (Hardening):** Cabeceras de Seguridad HTTP (helmet).
-*   `[ ]` **SEC-02 (Anti-Fuerza Bruta):** Limitación de Tasa y Bloqueo de Cuentas (express-rate-limit).
-*   `[ ]` **SEC-03 (2FA/OTP):** Verificación por SMS (Twilio).
-*   `[ ]` **SEC-04 (XSS):** Saneamiento de Contenido Enriquecido (sanitize-html).
+*   `[ ]` **SEC-01 (Hardening): Cabeceras de Seguridad HTTP.**
+    *   `[ ]` Instalar y configurar el middleware `helmet` en Express para añadir cabeceras como `Content-Security-Policy`, `X-Frame-Options`, `Strict-Transport-Security`.
+*   `[ ]` **SEC-02 (Anti-Fuerza Bruta): Limitación de Tasa y Bloqueo de Cuentas.**
+    *   `[ ]` Instalar y configurar `express-rate-limit` en endpoints de autenticación (`/login`, `/forgot-password`).
+    *   `[ ]` Implementar lógica de bloqueo de cuenta tras un número configurable de intentos fallidos por email/IP.
+    *   `[ ]` Implementar validación de fortaleza de contraseña en el backend (`finalizarRegistro`, `resetPassword`, `updateMyPassword`).
+*   `[ ]` **SEC-03 (2FA/OTP): Verificación por SMS (One-Time Password).**
+    *   `[ ]` Integrar un proveedor de SMS Gateway (ej. Twilio).
+    *   `[ ]` Construir el flujo para que los usuarios verifiquen y gestionen su número de teléfono.
+    *   `[ ]` Implementar OTP como segundo factor de autenticación opcional en el login y para acciones críticas (ej. traspaso de poder).
+*   `[ ]` **SEC-04 (XSS): Saneamiento de Contenido Enriquecido.**
+    *   `[ ]` Instalar y configurar una librería como `sanitize-html`.
+    *   `[ ]` Implementar el saneamiento de cualquier texto enriquecido (HTML) proveniente del usuario antes de guardarlo en la base de datos (ej. foros, noticias).
 
 # =================================================================================
 # ||     Epopeya 9 (Futura): Mantenimiento y Escalabilidad     `[PENDIENTE]`     ||
