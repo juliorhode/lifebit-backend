@@ -10,6 +10,7 @@ const format = require('pg-format');
 const AppError = require('../../utils/appError');
 const generaTokens = require('../../utils/jwtUtils');
 
+
 /**
  * @description Registra un nuevo usuario en el sistema (flujo tradicional).
  * @route POST /api/auth/registro

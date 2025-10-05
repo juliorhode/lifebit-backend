@@ -1,8 +1,11 @@
 const express = require('express');
-const router = express.Router();
 const authController = require('../controllers/authController');
 const { protegeRuta, verificaRol } = require('../../middleware/authMiddleware');
 const passport = require('passport');
+const { loginLimiter, passwordResetLimiter } = require('../../middleware/securityMiddleware');
+const { middlewareValidarContraseña } = require('../../middleware/validationMiddleware');
+
+const router = express.Router();
 
 // Ruta para el registro de nuevos usuarios.
 // POST /api/auth/registro
@@ -10,7 +13,7 @@ router.post('/registro', authController.register);
 
 // ruta de login
 // POST /api/auth/login
-router.post('/login', authController.login);
+router.post('/login', loginLimiter, authController.login);
 
 // ruta de logout
 // POST /api/auth/logout
@@ -22,14 +25,19 @@ router.post('/refresh-token', authController.refreshToken);
 
 // Ruta para activacion de cuenta
 // POST /api/auth/finalizar-registro
-router.post('/finalizar-registro', authController.finalizarRegistro);
+router.post('/finalizar-registro', middlewareValidarContraseña, authController.finalizarRegistro);
 
 // --- RUTAS DE GESTIÓN DE CONTRASEÑA ---
-router.post('/forgot-password', authController.forgotPassword);
-router.patch('/reset-password/', authController.resetPassword);
+router.post('/forgot-password', passwordResetLimiter, authController.forgotPassword);
+router.patch('/reset-password/', middlewareValidarContraseña, authController.resetPassword);
 // 1. 'protegeRuta' se ejecuta primero. Si el token es válido, adjunta 'req.user' y llama a next().
 // 2. 'authController.updateMyPassword' se ejecuta después.
-router.patch('/update-password', protegeRuta, authController.updatePassword);
+router.patch(
+	'/update-password',
+	protegeRuta,
+	middlewareValidarContraseña,
+	authController.updatePassword
+);
 
 // --- RUTAS DE GOOGLE OAUTH ---
 // La ruta inicial que el frontend llamará.
@@ -62,9 +70,13 @@ router.get(
 // Para VINCULAR una cuenta activa. Debe estar protegida.
 // Passport es lo suficientemente inteligente como para mantener la sesión req.user existente a través de la redirección.
 // Para la activación, lleva el token_invitacion (que guardamos en la sesión). Para la viculacion, lleva la sesión del usuario autenticado.
-router.get('/google/vincular', protegeRuta, passport.authenticate('google', {
-	scope: ['profile', 'email'],
-}));
+router.get(
+	'/google/vincular',
+	protegeRuta,
+	passport.authenticate('google', {
+		scope: ['profile', 'email'],
+	})
+);
 
 /**
  * @description El endpoint de callback al que Google redirige en TODOS los flujos de OAuth.

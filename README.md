@@ -911,10 +911,28 @@ Passport a menudo requiere el manejo de sesiones. Aunque nuestra API es mayormen
 
 `npm install express-session`
 
-
-
 # Crear token similar al SECRET de JWT
 `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+# Express rate-limit
+Es un middleware para Express que ayuda a proteger tu aplicación contra ataques de fuerza bruta y abuso de la API al limitar la cantidad de solicitudes que un cliente puede hacer en un período de tiempo determinado. Esto es especialmente útil para endpoints sensibles como el login o el registro.
+## Instalacion
+`npm install express-rate-limit`
+
+## OWASP (Open Web Application Security Project) 
+Confirma es que no se trata de encontrar un único número "mágico", sino de encontrar el equilibrio perfecto entre dos fuerzas opuestas:
+* Seguridad Máxima: Extremos, permitiríamos 1 intento de login por hora. Esto detendría cualquier ataque, pero sería una experiencia de usuario terrible y bloquearía a clientes legítimos.
+* Experiencia de Usuario Fluida: Si permitiéramos 100 intentos por minuto, los usuarios nunca se sentirían frustrados, pero nuestra puerta principal estaría completamente abierta a los ataques.
+
+Los expertos no recomiendan un solo "limiter". Recomiendan una estrategia de defensa en capas, aplicando diferentes límites a diferentes acciones, y siendo más inteligentes que solo bloquear por IP.
+
+### Estrategia de Defensa:
+1) Límite por IP (La Primera Muralla): 
+   Sigue siendo nuestra primera línea de defensa. Es bueno para detener ataques de red distribuidos y bots poco sofisticados. Un límite de ~50-100 peticiones por minuto a nivel global es una buena práctica (lo podemos configurar en app.js más adelante), pero para el login, podemos ser más específicos.
+2) Límite por Cuenta (El Francotirador): 
+   Esta es la mejora clave. En lugar de bloquear una IP (que podría afectar a toda una oficina si es una IP compartida), debemos limitar los intentos fallidos por nombre de usuario/email. Esto es mucho más preciso. Un atacante solo puede intentar adivinar la contraseña de una cuenta específica un número limitado de veces.
+3) Límites más Estrictos para Acciones Sensibles: 
+   El endpoint de "olvidé mi contraseña" es un vector de ataque para el acoso (un atacante podría usarlo para spamear la bandeja de entrada de un usuario). Por lo tanto, debe tener un límite mucho más estricto que el login.
 
 
 # Nota para puebas

@@ -43,10 +43,10 @@
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
 *   `[ ]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo)..
-*   `[ ]` **AUTH-14 (Seguridad):** Implementar Protección contra Fuerza Bruta.
-    *   `[ ]` Instalar y configurar express-rate-limit en el endpoint de login.
-    *   `[ ]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.
-    *   `[ ]` Añadir validación de fortaleza de contraseña en el backend.
+*   `[x]` **AUTH-14 (Seguridad):** Implementar Protección contra Fuerza Bruta.
+    *   `[x]` Instalar y configurar express-rate-limit en el endpoint de login.
+    *   `[x]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.
+    *   `[x]` Añadir validación de fortaleza de contraseña en el backend.
 * Epopeya AUTH-B: Gestión de Perfil de Usuario
 *    `[x]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
 *    `[ ]` **PERFIL-02:** Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
