@@ -152,24 +152,54 @@ const DESVINCULAR_GOOGLE_ID = `
     UPDATE usuarios SET google_id = NULL, fecha_actualizacion = NOW() WHERE id = $1 RETURNING id, google_id;
 `;
 
+/**
+ * @description Actualiza los datos de perfil de un usuario (nombre, apellido, cédula, teléfono, avatar).
+ * Es seguro porque solo actualiza el registro correspondiente al ID del usuario autenticado.
+ * Devuelve el registro actualizado para evitar una segunda consulta a la BD.
+ */
+const ACTUALIZAR_PERFIL_USUARIO = `
+  UPDATE usuarios
+  SET 
+    nombre = $2,
+    apellido = $3,
+    cedula = $4,
+    telefono = $5,
+    avatar_url = $6,
+    fecha_actualizacion = NOW()
+  WHERE id = $1
+  RETURNING 
+    id,
+    nombre,
+    apellido,
+    email,
+    telefono,
+    cedula,
+    id_unidad_actual,
+    avatar_url,
+    estado,
+    rol,
+    id_edificio_actual;
+`;
+
 module.exports = {
-    CREA_USUARIO_INVITADO,
-    OBTENER_INVITADO_POR_TOKEN,
-    ACTIVAR_USUARIO,
-    OBTENER_USUARIOS_POR_EMAILS,
-    GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA,
-    CREA_USUARIOS_MASIVO,
-    OBTENER_USUARIO_ACTIVO_POR_EMAIL,
-    GUARDAR_TOKEN_RESETEO,
-    OBTENER_USUARIO_POR_TOKEN_RESETEO,
-    RESETEAR_CONTRASENA,
-    OBTENER_CONTRASENA_POR_ID,
-    ACTUALIZAR_CONTRASENA,
-    OBTENER_USUARIO_POR_GOOGLE_ID,
-    OBTENER_INVITADO_POR_EMAIL,
-    ACTIVAR_Y_VINCULAR_GOOGLE,
-    DESVINCULAR_GOOGLE_ID,
-    VINCULAR_GOOGLE_ID,
-    OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
-    OBTENER_USUARIO_POR_ID,
+	CREA_USUARIO_INVITADO,
+	OBTENER_INVITADO_POR_TOKEN,
+	ACTIVAR_USUARIO,
+	OBTENER_USUARIOS_POR_EMAILS,
+	GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA,
+	CREA_USUARIOS_MASIVO,
+	OBTENER_USUARIO_ACTIVO_POR_EMAIL,
+	GUARDAR_TOKEN_RESETEO,
+	OBTENER_USUARIO_POR_TOKEN_RESETEO,
+	RESETEAR_CONTRASENA,
+	OBTENER_CONTRASENA_POR_ID,
+	ACTUALIZAR_CONTRASENA,
+	OBTENER_USUARIO_POR_GOOGLE_ID,
+	OBTENER_INVITADO_POR_EMAIL,
+	ACTIVAR_Y_VINCULAR_GOOGLE,
+	DESVINCULAR_GOOGLE_ID,
+	VINCULAR_GOOGLE_ID,
+	OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
+	OBTENER_USUARIO_POR_ID,
+	ACTUALIZAR_PERFIL_USUARIO, 
 };

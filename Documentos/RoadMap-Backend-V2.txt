@@ -48,7 +48,7 @@
     *   `[ ]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.
     *   `[ ]` Añadir validación de fortaleza de contraseña en el backend.
 * Epopeya AUTH-B: Gestión de Perfil de Usuario
-*    `[ ]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
+*    `[x]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
 *    `[ ]` **PERFIL-02:** Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
 *    `[x]` **PERFIL-03:** Flujo para vincular una cuenta de Google a una cuenta activa.
 *    `[ ]` **PERFIL-04:** Flujo para desvincular una cuenta de Google.

@@ -7,14 +7,24 @@ const router = express.Router();
 // Todas las rutas definidas a partir de este punto requieren autenticación.
 router.use(protegeRuta);
 
-// Ruta de temporal para ruta protegida
-// GET /api/perfil/me
+/**
+ * @route   GET /api/perfil/me
+ * @desc    Obtiene el perfil completo del usuario actualmente autenticado.
+ * @access  Private
+ */
 router.get('/me', perfilController.obtenerPerfil);
 
 /**
- * @description Punto de entrada para VINCULAR una cuenta de Google.
- * Para usuarios ya logueados (con contraseña) que quieren añadir Google como método de login.
- * @access Private
+ * @route   PATCH /api/perfil/me
+ * @desc    Actualiza los datos personales (nombre, teléfono) del usuario autenticado.
+ * @access  Private
+ */
+router.patch('/me', perfilController.actualizarPerfil);
+
+/**
+ * @route   POST /api/perfil/google/desvincular
+ * @desc    Desvincula la cuenta de Google del usuario, si tiene una contraseña establecida.
+ * @access  Private
  */
 // GET /api/auth/google/vincular
 // Para usuarios invitados y para usuarios activos que quieren conectar su cuenta.

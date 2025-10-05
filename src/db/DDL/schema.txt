@@ -48,7 +48,7 @@ CREATE TABLE usuarios (
     telefono VARCHAR(50),
     cedula VARCHAR(20) UNIQUE,
     id_unidad_actual INTEGER,
-    avatar_url VARCHAR(255),
+    avatar_url TEXT,
     google_id VARCHAR(255) UNIQUE,
     estado VARCHAR(50) NOT NULL DEFAULT 'invitado' CHECK (estado IN ('invitado', 'activo', 'suspendido')),
     token_registro VARCHAR(255),
