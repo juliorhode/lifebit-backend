@@ -17,6 +17,15 @@ router.use(protegeRuta, verificaRol('administrador'));
 // POST /api/admin/configuracion/avanzar-paso
 router.post('/configuracion/avanzar-paso', configController.avanzarPasoConfiguracion);
 
+// --- RUTA PARA  OBTENER LAS CARACTTERISTICAS DE LICENCIAS ---
+// GET /api/admin/licencia/caracteristicas (accesible por administrador y residente)
+router.get(
+	'/licencia/caracteristicas',
+	protegeRuta,
+	verificaRol(['administrador', 'residente']),
+	adminController.obtenerCaracteristicasEdificio
+);
+
 // --- Rutas de Gestión de Unidades ---
 // Para generar las unidades del edificio
 // POST /api/admin/unidades/generar-flexible

@@ -936,11 +936,12 @@ Los expertos no recomiendan un solo "limiter". Recomiendan una estrategia de def
 
 
 # Nota para puebas
-Para probar un odulo en el cual no se haya especificado internamente la carga de `require('dotenv').config(...) `, lo podemos hacer indicandole a NodeJs con un flag `-r` o `--require` de la siguiente forma:
+Para probar un modulo en el cual no se haya especificado internamente la carga de `require('dotenv').config(...) `, lo podemos hacer indicandole a NodeJs con un flag `-r` o `--require` de la siguiente forma:
 
 Ejemplo con mailer.js:
 
-`node -r dotenv/config src/config/mailer.js `
+`node -r dotenv/config src/services/emailService.js `
+
 
 `-r dotenv/config`: Le dice a Node: "Oye, antes de que ejecutes cualquier cosa, primero carga y ejecuta el script config de la librería dotenv". Este script está diseñado específicamente para leer tu archivo .env de la raíz del proyecto y poblar process.env.
 

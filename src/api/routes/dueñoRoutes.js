@@ -1,6 +1,7 @@
 const express = require('express')
 const dueñoController = require('../controllers/dueñoController')
 const { protegeRuta, verificaRol } = require('../../middleware/authMiddleware')
+const licenciaRoutes = require('./licenciaRoutes')
 
 const router = express.Router()
 // Middleware a nivel de router: se aplica a TODAS las rutas de este archivo.
@@ -14,5 +15,8 @@ router.get('/solicitudes', dueñoController.obtenerSolicitudesPendientes)
 
 // Aquí añadiremos la ruta para aprobar la solicitud más adelante.
 router.post('/solicitudes/:id/aprobar', dueñoController.aprobarSolicitud);
+
+// Monta las rutas de licencias en /api/owner/licencias
+router.use('/licencias', licenciaRoutes);
 
 module.exports = router

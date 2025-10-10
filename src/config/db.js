@@ -53,10 +53,17 @@ pool.on('error', (err, client) => {
 // todos usarán este objeto 'db'. Si en el futuro queremos añadir logging
 // o métricas a CADA consulta, solo lo cambiamos en este lugar.
 module.exports = {
-    // método 'query' para consultas simples
-    query: (text, params) => pool.query(text, params),
-    // método para obtener un cliente para transacciones. Lo llamamos 'getClient' por claridad, pero internamente llama a 'pool.connect()'.
-    getClient: () => pool.connect(),
-    // db.getClient() llamará a pool.connect(), que devolverá una conexión dedicada del pool, y se podrá usar client.query('BEGIN'), client.query('COMMIT'), etc., con la seguridad de que todas las peticiones van por el mismo "túnel".
-    pool: pool, // para poder acceder al pool desde el script
-}
+	// método 'query' para consultas simples
+    // query: (text, params) => pool.query(text, params),
+    
+    // Añadimos logging de las queries en desarrollo para depuración.
+    // En producción, esto no se ejecuta para evitar llenar los logs.
+	query: async (text, params) => {
+		if (process.env.NODE_ENV !== 'production') console.log('🧩 SQL:', text);
+		return pool.query(text, params);
+	},
+	// método para obtener un cliente para transacciones. Lo llamamos 'getClient' por claridad, pero internamente llama a 'pool.connect()'.
+	getClient: () => pool.connect(),
+	// db.getClient() llamará a pool.connect(), que devolverá una conexión dedicada del pool, y se podrá usar client.query('BEGIN'), client.query('COMMIT'), etc., con la seguridad de que todas las peticiones van por el mismo "túnel".
+	pool: pool, // para poder acceder al pool desde el script
+};

@@ -42,7 +42,37 @@
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
-*   `[ ]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo)..
+*   `[~]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo).
+    *   `[x]` **AUTH-13.1:** Preparación de la Infraestructura.
+        *   `[x]` Modificar la tabla usuarios añadiendo las columnas nuevo_email_pendiente, token_cambio_email y token_cambio_email_expira para manejar el estado transitorio del cambio.
+        *   `[x]` Crear dos nuevas plantillas de email en emailService.js.
+            *   `[x ]` Una plantilla de alerta de seguridad para el email antiguo ("Se ha solicitado un cambio de email...").
+            *   `[x ]` Una plantilla de verificación para el email nuevo ("Confirma tu nueva dirección de email...").
+    *   `[ ]` **AUTH-13.2:** Implementar el Endpoint de Re-autenticación
+        *   `[ ]` Crear la ruta POST /api/perfil/verify-password en perfilRoutes.js. Debe estar protegida por protegeRuta.
+            *   `[ ]` Implementar la lógica en perfilController.verifyPassword. Esta funcion:
+                *   `[ ]` Recibe la contraseña actual del usuario.
+                *   `[ ]` La compara de forma segura (bcrypt.compare) con el hash almacenado en la BD para el usuario req.user.id.
+                *   `[ ]` Si la contraseña es correcta, responde con un success: true. Si es incorrecta, responde con un error 401.
+    *   `[ ]` **AUTH-13.3:** Implementar el Flujo de Cambio de Email.
+        *   `[ ]` Crear la ruta POST /api/perfil/request-email-change en perfilRoutes.js. Protegida por protegeRuta.
+            *   `[ ]`  Implementar la lógica en perfilController.requestEmailChange. Esta función:
+                *   `[ ]` Recibe el nuevo email.
+                *   `[ ]` Verifica que el nuevo email no esté ya en uso en la tabla usuarios.
+                *   `[ ]` Genera un token de cambio (tokenPlano, tokenHasheado) y una fecha de expiración (ej. 15 minutos).
+                *   `[ ]` Guarda el nuevo_email_pendiente, token_cambio_email (hasheado) y la expiración en el registro del usuario.
+                *   `[ ]` ncola dos trabajos en la cola_de_trabajos:
+                    *   `[ ]` Uno para enviar el email de alerta al correo antiguo.
+                    *   `[ ]` Otro para enviar el email de verificación al correo nuevo.
+                *   `[ ]` Responde con un mensaje de éxito indicando al usuario que revise su nuevo email.
+        *   `[ ]` Crear la ruta PÚBLICA POST /api/auth/verify-email-change.
+                *   `[ ]` Implementar la lógica en authController.verifyEmailChange. Esta función:
+                    *   `[ ]` Recibe el token.
+                    *   `[ ]` ashea el token y busca un usuario que tenga ese token_cambio_email y que no haya expirado.
+                    *   `[ ]` Si se encuentra, actualiza el email del usuario al valor de nuevo_email_pendiente.
+                    *   `[ ]` Limpia las tres columnas temporales (nuevo_email_pendiente, token_cambio_email, token_cambio_email_expira).
+                    *   `[ ]` Importante: Considerar si se debe invalidar las sesiones existentes (implementando la lógica de jwt_version del ADR-009 aquí sería ideal).
+                    *   `[ ]` Responde con un mensaje de éxito confirmando el cambio de email.
 *   `[x]` **AUTH-14 (Seguridad):** Implementar Protección contra Fuerza Bruta.
     *   `[x]` Instalar y configurar express-rate-limit en el endpoint de login.
     *   `[x]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.
@@ -51,7 +81,7 @@
 *    `[x]` **PERFIL-01:** Endpoint GET /api/perfil/me para obtener los datos completos del usuario logueado.
 *    `[x]` **PERFIL-02:** Endpoint PATCH /api/perfil/me para actualizar datos personales (nombre, teléfono).
 *    `[x]` **PERFIL-03:** Flujo para vincular una cuenta de Google a una cuenta activa.
-*    `[ ]` **PERFIL-04:** Flujo para desvincular una cuenta de Google.
+*    `[x]` **PERFIL-04:** Flujo para desvincular una cuenta de Google.
 
 # =================================================================================
 # ||     Epopeya 2: Panel del Dueño (Gestión del SaaS)     `[EN PROGRESO]`         ||
@@ -217,3 +247,26 @@ Consecuencias:
 Backend/Frontend: Requiere actualización de referencias en código y docs.
 Linear Local: Ahora coincide perfectamente con roadmap.
 Beneficios: Roadmap consistente, sin duplicados, alineado con gestión de proyectos IA y estándares de calidad.
+
+ADR-009: Mejoras Avanzadas de Seguridad y Optimización en Autenticación
+Título: ADR-009: Mejoras Avanzadas de Seguridad y Optimización en el Sistema de Autenticación
+Fecha: 2025-10-06
+Estado: Propuesto
+Contexto:
+Tras la implementación de la autenticación básica en LifeBit, se han identificado oportunidades para fortalecer la seguridad contra amenazas avanzadas como replay de tokens, ataques CSRF, robo de sesiones compartidas, y mejorar la auditoría y optimización del sistema.
+Problema:
+El sistema actual carece de protecciones contra ciertos vectores de ataque comunes en aplicaciones web, como la reutilización de refresh tokens, ataques CSRF si se usan cookies, invalidación de tokens al cambiar contraseñas, y falta de logging detallado para auditoría. Además, hay oportunidades de optimización en consultas de base de datos y caching para mejorar el rendimiento.
+Decisión:
+Se decide implementar las siguientes mejoras en el sistema de autenticación, consolidando elementos no duplicados con el roadmap existente:
+- Implementar "token rotation" para refresh tokens: cada refreshToken válido genera uno nuevo y anula el anterior.
+- Añadir protección CSRF si el frontend usa cookies, mediante tokens CSRF en encabezados.
+- Implementar jwt_version en la tabla usuarios para invalidar tokens viejos al cambiar contraseña, previniendo robo de sesión compartida.
+- Integrar pino para logging de IPs, agentes de usuario, fallos de login, etc., para auditoría.
+- En register(), usar email.toLowerCase() antes de insertar para evitar duplicados por sensibilidad a mayúsculas.
+- En login(), añadir campo last_login al usuario para registrar la última sesión.
+- En protegeRuta(), cachear temporalmente el usuario validado para evitar consultas repetidas.
+- En authQueries.js y usuarioQueries.js, añadir LIMIT 1 en queries que devuelven un solo usuario y crear vistas (ej. v_usuarios_token) para consultas complejas.
+Consecuencias:
+Backend: Requiere modificaciones en authController.js, middlewares de autenticación, queries de usuario y auth, y posiblemente la base de datos (añadir campos jwt_version, last_login). Integración de pino para logging.
+Frontend: Si se implementa CSRF, puede requerir ajustes en el envío de requests.
+Beneficios: Mayor robustez contra ataques avanzados, mejor trazabilidad con logging, optimización de rendimiento en consultas frecuentes, y prevención de vulnerabilidades comunes, elevando la postura de seguridad general de LifeBit.

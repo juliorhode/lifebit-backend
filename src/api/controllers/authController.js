@@ -194,14 +194,16 @@ const refreshToken = async (req, res, next) => {
 		const result = await db.query(queries.USUARIO_TOKEN, [decoded.id]);
 		const usuario = result.rows[0];
 		if (!usuario || usuario.estado !== 'activo') {
+			// Si el usuario no es válido, limpiamos la cookie para prevenir futuros intentos.
+			res.cookie('refreshToken', '', { httpOnly: true, expires: new Date(0) });
 			return next(new AppError('No se puede refrescar el token para este usuario', 403));
 		}
 		// 4. Si todo es correcto, generamos un NUEVO accessToken.
 		// Creamos el payload con la información fresca del usuario.
 		const payload = {
 			id: usuario.id,
-			// rol: usuario.rol,
-			// id_edificio: user.id_edificio_actual, // Incluimos el ID del edificio en el token
+			rol: usuario.rol,
+			id_edificio: usuario.id_edificio_actual, // Incluimos el ID del edificio en el token
 		};
 		// ¡Ojo! Solo generamos un nuevo accessToken. El refreshToken original sigue siendo válido
 		// hasta que expire. No necesitamos emitir uno nuevo en cada refresco.
@@ -213,8 +215,21 @@ const refreshToken = async (req, res, next) => {
 			success: true,
 			message: 'Token de acceso renovado exitosamente',
 			accessToken,
+			// cambio nuevo 
+			data: { usuario  // Enviamos también la información del usuario
+			},
 		});
 	} catch (error) {
+		if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+			// Si el token de refresco es inválido o expiró, es crucial limpiar la cookie.
+			res.cookie('refreshToken', '', {
+				httpOnly: true,
+				expires: new Date(0),
+			});
+			return next(
+				new AppError('Tu sesión ha caducado. Por favor, inicia sesión de nuevo.', 401)
+			);
+		}
 		next(error);
 	}
 };

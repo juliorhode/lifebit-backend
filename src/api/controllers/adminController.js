@@ -469,10 +469,33 @@ const eliminarResidente = async (req, res, next) => {
 		next(error);
 	}
 }
+
+const obtenerCaracteristicasEdificio = async (req, res, next) => {
+	try {
+		const { rows } = await db.query(
+			`
+      SELECT l.caracteristicas
+      FROM licencias l
+      JOIN contratos c ON l.id = c.id_licencia
+      JOIN edificios e ON c.id = e.id_contrato
+      WHERE e.id = $1
+    `,
+			[req.user.id_edificio_actual]
+		);
+
+		if (!rows.length)
+			return next(new AppError('No se encontraron características para este edificio.', 404));
+
+		return res.json({ success: true, data: rows[0].caracteristicas });
+	} catch (error) {
+		return next(error);
+	}
+};
 module.exports = {
 	invitarResidente,
 	invitarResidentesMasivo,
 	obtenerResidentes,
 	actualizaResidente,
 	eliminarResidente,
+	obtenerCaracteristicasEdificio,
 };
