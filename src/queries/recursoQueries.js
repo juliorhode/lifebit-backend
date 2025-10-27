@@ -85,7 +85,9 @@ const OBTENER_RECURSOS_POR_TIPO = `
         CASE
             WHEN ra.id_unidad IS NOT NULL THEN 'ocupado'
             ELSE 'disponible'
-        END as estado
+        END as estado,
+        ra.ubicacion,
+        ra.estado_operativo
     FROM recursos_asignados ra
     JOIN recursos_edificio re ON ra.id_recurso_edificio = re.id
     LEFT JOIN unidades u ON ra.id_unidad = u.id

@@ -35,6 +35,22 @@ const procesarTrabajo = async (trabajo) => {
 			} = trabajo.payload;
 			await emailService.enviarEmailReseteoPassword(emailReset, nombreREset, tokenREset);
 			break;
+		case 'enviar_alerta_cambio_email':
+			const {
+				destinatarioEmail: emailAlerta,
+				destinatarioNombre: nombreAlerta,
+				nuevoEmail,
+			} = trabajo.payload;
+			await emailService.enviarAlertaCambioEmail(emailAlerta, nombreAlerta, nuevoEmail);
+			break;
+		case 'enviar_verificacion_nuevo_email':
+			const {
+				destinatarioEmail: emailVerif,
+				destinatarioNombre: nombreVerif,
+				token: tokenVerif,
+			} = trabajo.payload;
+			await emailService.enviarVerificacionNuevoEmail(emailVerif, nombreVerif, tokenVerif);
+			break;
 
 		default:
 			throw new Error(`Tipo de trabajo desconocido: ${trabajo.tipo_trabajo}`);

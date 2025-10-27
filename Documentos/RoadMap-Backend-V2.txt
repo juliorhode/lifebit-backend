@@ -42,37 +42,37 @@
 *   `[x]` **AUTH-10:** Recuperación de contraseña (`forgot-password` y `reset-password`).
 *   `[x]` **AUTH-11:** Cambio de contraseña para un usuario logueado.
 *   `[x]` **AUTH-12 (Pospuesto):** Integración con Google (OAuth 2.0).
-*   `[~]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo).
+*   `[x]` **AUTH-13:** Flujo seguro para el cambio de dirección de email del usuario (con verificación al nuevo correo).
     *   `[x]` **AUTH-13.1:** Preparación de la Infraestructura.
         *   `[x]` Modificar la tabla usuarios añadiendo las columnas nuevo_email_pendiente, token_cambio_email y token_cambio_email_expira para manejar el estado transitorio del cambio.
         *   `[x]` Crear dos nuevas plantillas de email en emailService.js.
             *   `[x ]` Una plantilla de alerta de seguridad para el email antiguo ("Se ha solicitado un cambio de email...").
             *   `[x ]` Una plantilla de verificación para el email nuevo ("Confirma tu nueva dirección de email...").
-    *   `[ ]` **AUTH-13.2:** Implementar el Endpoint de Re-autenticación
-        *   `[ ]` Crear la ruta POST /api/perfil/verify-password en perfilRoutes.js. Debe estar protegida por protegeRuta.
-            *   `[ ]` Implementar la lógica en perfilController.verifyPassword. Esta funcion:
-                *   `[ ]` Recibe la contraseña actual del usuario.
-                *   `[ ]` La compara de forma segura (bcrypt.compare) con el hash almacenado en la BD para el usuario req.user.id.
-                *   `[ ]` Si la contraseña es correcta, responde con un success: true. Si es incorrecta, responde con un error 401.
-    *   `[ ]` **AUTH-13.3:** Implementar el Flujo de Cambio de Email.
-        *   `[ ]` Crear la ruta POST /api/perfil/request-email-change en perfilRoutes.js. Protegida por protegeRuta.
-            *   `[ ]`  Implementar la lógica en perfilController.requestEmailChange. Esta función:
-                *   `[ ]` Recibe el nuevo email.
-                *   `[ ]` Verifica que el nuevo email no esté ya en uso en la tabla usuarios.
-                *   `[ ]` Genera un token de cambio (tokenPlano, tokenHasheado) y una fecha de expiración (ej. 15 minutos).
-                *   `[ ]` Guarda el nuevo_email_pendiente, token_cambio_email (hasheado) y la expiración en el registro del usuario.
-                *   `[ ]` ncola dos trabajos en la cola_de_trabajos:
-                    *   `[ ]` Uno para enviar el email de alerta al correo antiguo.
-                    *   `[ ]` Otro para enviar el email de verificación al correo nuevo.
-                *   `[ ]` Responde con un mensaje de éxito indicando al usuario que revise su nuevo email.
-        *   `[ ]` Crear la ruta PÚBLICA POST /api/auth/verify-email-change.
+    *   `[x]` **AUTH-13.2:** Implementar el Endpoint de Re-autenticación
+        *   `[x]` Crear la ruta POST /api/perfil/verify-password en perfilRoutes.js. Debe estar protegida por protegeRuta.
+            *   `[x]` Implementar la lógica en perfilController.verifyPassword. Esta funcion:
+                *   `[x1]` Recibe la contraseña actual del usuario.
+                *   `[x]` La compara de forma segura (bcrypt.compare) con el hash almacenado en la BD para el usuario req.user.id.
+                *   `[x]` Si la contraseña es correcta, responde con un success: true. Si es incorrecta, responde con un error 401.
+    *   `[x]` **AUTH-13.3:** Implementar el Flujo de Cambio de Email.
+        *   `[x]` Crear la ruta POST /api/perfil/request-email-change en perfilRoutes.js. Protegida por protegeRuta.
+            *   `[x]`  Implementar la lógica en perfilController.requestEmailChange. Esta función:
+                *   `[x]` Recibe el nuevo email.
+                *   `[x]` Verifica que el nuevo email no esté ya en uso en la tabla usuarios.
+                *   `[x]` Genera un token de cambio (tokenPlano, tokenHasheado) y una fecha de expiración (ej. 15 minutos).
+                *   `[x]` Guarda el nuevo_email_pendiente, token_cambio_email (hasheado) y la expiración en el registro del usuario.
+                *   `[x]` Encola dos trabajos en la cola_de_trabajos:
+                    *   `[x]` Uno para enviar el email de alerta al correo antiguo.
+                    *   `[x]` Otro para enviar el email de verificación al correo nuevo.
+                *   `[x]` Responde con un mensaje de éxito indicando al usuario que revise su nuevo email.
+        *   `[x]` Crear la ruta PÚBLICA POST /api/auth/verify-email-change.
                 *   `[ ]` Implementar la lógica en authController.verifyEmailChange. Esta función:
-                    *   `[ ]` Recibe el token.
-                    *   `[ ]` ashea el token y busca un usuario que tenga ese token_cambio_email y que no haya expirado.
-                    *   `[ ]` Si se encuentra, actualiza el email del usuario al valor de nuevo_email_pendiente.
-                    *   `[ ]` Limpia las tres columnas temporales (nuevo_email_pendiente, token_cambio_email, token_cambio_email_expira).
-                    *   `[ ]` Importante: Considerar si se debe invalidar las sesiones existentes (implementando la lógica de jwt_version del ADR-009 aquí sería ideal).
-                    *   `[ ]` Responde con un mensaje de éxito confirmando el cambio de email.
+                    *   `[x]` Recibe el token.
+                    *   `[x]` Hashea el token y busca un usuario que tenga ese token_cambio_email y que no haya expirado.
+                    *   `[x]` Si se encuentra, actualiza el email del usuario al valor de nuevo_email_pendiente.
+                    *   `[x]` Limpia las tres columnas temporales (nuevo_email_pendiente, token_cambio_email, token_cambio_email_expira).
+                    *   `[x]` Importante: Considerar si se debe invalidar las sesiones existentes (implementando la lógica de jwt_version del ADR-009 aquí sería ideal).
+                    *   `[x]` Responde con un mensaje de éxito confirmando el cambio de email.
 *   `[x]` **AUTH-14 (Seguridad):** Implementar Protección contra Fuerza Bruta.
     *   `[x]` Instalar y configurar express-rate-limit en el endpoint de login.
     *   `[x]` Implementar lógica de bloqueo de cuenta tras X intentos fallidos.

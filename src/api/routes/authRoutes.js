@@ -7,31 +7,72 @@ const { middlewareValidarContraseña } = require('../../middleware/validationMid
 
 const router = express.Router();
 
-// Ruta para el registro de nuevos usuarios.
-// POST /api/auth/registro
+/**
+ * @route   POST /api/auth/registro
+ * @desc    Registra un nuevo usuario.
+ * @access  Public
+ */
 router.post('/registro', authController.register);
 
-// ruta de login
-// POST /api/auth/login
+/**
+ * @route   POST /api/auth/login
+ * @desc    Inicia sesión de un usuario.
+ * @access  Public
+ */
 router.post('/login', loginLimiter, authController.login);
 
-// ruta de logout
-// POST /api/auth/logout
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Cierra la sesión del usuario.
+ * @access  Private
+ */
 router.post('/logout', protegeRuta, authController.logout);
 
-// No necesita protección, ya que su "protección" es la validez del propio refreshToken
-// POST /api/auth/refresh-token
+/**
+ * @route   POST /api/auth/refresh-token
+ * @desc    Renueva el token de acceso utilizando el refresh token.
+ * 			No necesita protección, ya que su "protección" es la validez del propio refreshToken
+ * @access  Public
+ */
 router.post('/refresh-token', authController.refreshToken);
 
-// Ruta para activacion de cuenta
-// POST /api/auth/finalizar-registro
+/**
+ * @route   POST /api/auth/finalizar-registro
+ * @desc    Finaliza el registro de un usuario invitado usando el token de invitación.
+ * @access  Public
+ */
 router.post('/finalizar-registro', middlewareValidarContraseña, authController.finalizarRegistro);
 
+/**
+ * @route   POST /api/auth/verify-email-change
+ * @desc    Verifica el token enviado al nuevo email y finaliza el proceso de cambio.
+ * @access  Public
+ */
+router.post('/verify-email-change', authController.verifyEmailChange);
+
 // --- RUTAS DE GESTIÓN DE CONTRASEÑA ---
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Inicia el proceso de reseteo de contraseña enviando un email con el token.
+ * @access  Public
+ */
 router.post('/forgot-password', passwordResetLimiter, authController.forgotPassword);
+
+/**
+ * @route   PATCH /api/auth/reset-password
+ * @desc    Resetea la contraseña usando el token enviado por email.
+ * @access  Public
+ */
 router.patch('/reset-password/', middlewareValidarContraseña, authController.resetPassword);
-// 1. 'protegeRuta' se ejecuta primero. Si el token es válido, adjunta 'req.user' y llama a next().
-// 2. 'authController.updateMyPassword' se ejecuta después.
+
+/**
+ * @route   PATCH /api/auth/update-password
+ * @desc    Actualiza la contraseña del usuario autenticado.
+ * 			1. 'protegeRuta' se ejecuta primero. Si el token es válido, adjunta 'req.user' y llama a next().
+ * 			2. 'middlewareValidarContraseña' valida la nueva contraseña en el cuerpo.
+ * 			3. 'authController.updatePassword' se ejecuta después.
+ * @access  Private
+ */
 router.patch(
 	'/update-password',
 	protegeRuta,

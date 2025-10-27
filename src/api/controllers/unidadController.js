@@ -119,7 +119,16 @@ const generarUnidadesFlexible = async (req, res, next) => {
 		);
 		await db.query(sql);
 
-		// --- 3.1. ACTUALIZAR EL ESTADO DEL EDIFICIO ---
+		// --- 3.1. ACTUALIZAR TOTALES EN LA TABLA DE EDIFICIOS ---
+		await cliente.query(edificioQueries.ACTUALIZA_TOTALES_EDIFICIO, [
+			configuracionGeneral.totalPisos,
+			unidadesParaInsertar.length,
+			idEdificio,
+		]);
+		
+
+		
+		// --- 3.2. ACTUALIZAR EL ESTADO DEL EDIFICIO ---
 		await cliente.query(edificioQueries.ACTUALIZA_ESTADO_CONFIGURACION, [
 			ESTADOS_CONFIGURACION.PASO_2_RECURSOS,
 			idEdificio,
@@ -171,8 +180,44 @@ const obtenerUnidades = async (req, res, next) => {
 		next(error);
 	}
 }
+
+/**
+ * @description Actualiza la estructura del edificio, añadiendo datos sobre la cantidad de pisos de sotano y si incluye azotea.
+ * @route PATCH /api/admin/unidades/edificio
+ * @access Private (administrador)
+ */
+const actualizarEstructuraEdificio = async (req, res, next) => {
+	try {
+		const { pisosSotano, incluyeAzotea } = req.body;
+		const idEdificio = req.user.id_edificio_actual;
+
+		// Validar los datos de entrada
+		if (typeof pisosSotano !== 'number' || typeof incluyeAzotea !== 'boolean') {
+			return next(new AppError('Datos de entrada inválidos.', 400));
+		}
+		if (!idEdificio) {
+			throw new AppError('El administrador no está asociado a ningún edificio.', 400);
+		}
+
+		// Actualizar la estructura del edificio en la base de datos
+		await db.query(edificioQueries.ACTUALIZAR_ESTRUCTURA_EDIFICIO, [
+			pisosSotano,
+			incluyeAzotea,
+			idEdificio,
+		]);
+
+		res.status(200).json({
+			success: true,
+			message: 'Estructura del edificio actualizada exitosamente.',
+		});
+	} catch (error) {
+		next(error);
+	}
+}
+
 module.exports = {
 	generarUnidadesFlexible,
 	obtenerUnidades,
+	actualizarEstructuraEdificio,
 };
 

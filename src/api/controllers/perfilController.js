@@ -1,6 +1,10 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/appError');
 const usuarioQueries = require('../../queries/usuarioQueries');
+const bcrypt = require('bcrypt');
+const tokenUtils = require('../../utils/tokenUtils');
+const trabajoQueries = require('../../queries/trabajoQueries');
+const format = require('pg-format');
 
 /**
  * @description Obtiene el perfil completo del usuario actualmente autenticado.
@@ -92,6 +96,140 @@ const actualizarPerfil = async (req, res, next) => {
 };
 
 /**
+ * @route   POST /api/perfil/verify-password
+ * @desc    Verifica la contraseña actual del usuario para autorizar acciones sensibles.
+ * @access  Private
+ */
+const verifyPassword = async (req, res, next) => {
+    try {
+        // --- 1. OBTENER DATOS Y VALIDAR ENTRADA ---
+        const { contraseña } = req.body;
+        if (!contraseña) {
+            throw new AppError('Por favor, proporciona tu contraseña actual.', 400);
+        }
+
+        // --- 2. OBTENER IDENTIDAD SEGURA ---
+        // La identidad (ID) del usuario se obtiene del token verificado por `protegeRuta`.
+        const idUsuario = req.user.id;
+
+        // --- 3. OBTENER HASH DE LA CONTRASEÑA DE LA BD ---
+        // Obtenemos el hash actual de la contraseña desde la base de datos.
+        // Es más seguro que obtener el registro completo del usuario si solo necesitamos la contraseña.
+        const {
+            rows: [usuario],
+        } = await db.query(usuarioQueries.OBTENER_CONTRASENA_POR_ID, [idUsuario]);
+
+        // Verificamos si el usuario existe y tiene una contraseña establecida (podría ser un usuario de Google).
+        if (!usuario || !usuario.contraseña) {
+            throw new AppError('No tienes una contraseña de LifeBit establecida. Por favor, crea una primero.', 403);
+        }
+
+        // --- 4. COMPARAR CONTRASEÑAS DE FORMA SEGURA ---
+        // Usamos bcrypt.compare para comparar la contraseña en texto plano enviada por el usuario
+        // con el hash almacenado en la base de datos.
+        const esCorrecta = await bcrypt.compare(contraseña, usuario.contraseña);
+
+        if (!esCorrecta) {
+            // Si la contraseña no coincide, enviamos un error 401 Unauthorized.
+            throw new AppError('La contraseña proporcionada es incorrecta.', 401);
+        }
+
+        // --- 5. RESPUESTA EXITOSA ---
+        // Si la contraseña es correcta, respondemos con éxito.
+        // El frontend usará esta respuesta para permitir al usuario continuar con la acción sensible.
+        res.status(200).json({
+            success: true,
+            message: 'Contraseña verificada correctamente.',
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @route   POST /api/perfil/request-email-change
+ * @desc    Inicia el proceso de cambio de email para el usuario autenticado.
+ * @access  Private
+ */
+const requestEmailChange = async (req, res, next) => {
+    try {
+		// --- 1. OBTENER DATOS Y VALIDAR ENTRADA ---
+        const { nuevoEmail } = req.body;
+        console.log('Nuevo email recibido:', nuevoEmail);
+        console.log('Cuerpo de la solicitud:', req.body);
+        
+		if (!nuevoEmail) {
+			throw new AppError('Por favor, proporciona la nueva direccion de email.', 400);
+		}
+		// --- 2. OBTENER IDENTIDAD SEGURA ---
+		const idUsuario = req.user.id;
+		const nombreUsuario = req.user.nombre;
+		const emailAntiguo = req.user.email;
+		if (nuevoEmail.toLowerCase() === emailAntiguo.toLowerCase()) {
+			throw new AppError(
+				'La nueva dirección de email no puede ser la misma que la actual.',
+				400
+			);
+		}
+		// --- 3. VERIFICAR QUE EL NUEVO EMAIL NO ESTÉ EN USO ---
+		const {
+			rows: [usuarioExistente],
+		} = await db.query(usuarioQueries.OBTENER_USUARIO_POR_EMAIL, [nuevoEmail]);
+		if (usuarioExistente) {
+			throw new AppError(
+				'La dirección de email proporcionada ya está en uso por otro usuario.',
+				409
+			); // 409 Conflict
+		}
+		// --- 4. GENERAR TOKEN Y FECHA DE EXPIRACIÓN ---
+		const { tokenPlano, tokenHasheado } = tokenUtils.generaTokenRegistro();
+		// El token será válido por 15 minutos.
+		const tokenExpira = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos en el futuro
+
+		// --- 5. GUARDAR LA SOLICITUD EN LA BASE DE DATOS ---
+		await db.query(usuarioQueries.GUARDAR_SOLICITUD_CAMBIO_EMAIL, [
+			nuevoEmail,
+			tokenHasheado,
+			tokenExpira,
+			idUsuario,
+		]);
+        // --- 6. ENCOLAR LOS TRABAJOS DE ENVÍO DE EMAIL ---
+        const payloadAlerta = {
+			destinatarioEmail: emailAntiguo,
+			destinatarioNombre: nombreUsuario,
+			nuevoEmail: nuevoEmail,
+		};
+		const payloadVerificacion = {
+			destinatarioEmail: nuevoEmail,
+			destinatarioNombre: nombreUsuario,
+			token: tokenPlano,
+		};
+
+		const trabajos = [
+			['enviar_alerta_cambio_email', JSON.stringify(payloadAlerta)],
+			['enviar_verificacion_nuevo_email', JSON.stringify(payloadVerificacion)],
+		];
+
+		const sql = format(trabajoQueries.CREA_TRABAJOS_MASIVO, trabajos);
+		await db.query(sql);
+
+		// --- 7. RESPONDER AL CLIENTE ---
+		res.status(200).json({
+			success: true,
+			message:
+				'Solicitud recibida. Hemos enviado un email de verificación a tu nueva dirección. Por favor, revisa tu bandeja de entrada.',
+		});
+	} catch (error) {
+        // Manejamos el caso de que dos usuarios intenten cambiar al mismo email pendiente.
+        if (error.code === '23505' && error.constraint === 'usuarios_nuevo_email_pendiente_key') {
+             return next(new AppError('Esa dirección de email ya está siendo verificada por otro usuario. Por favor, elige otra.', 409));
+        }
+		next(error);
+	}
+};
+
+/**
  * @description Desvincula la cuenta de Google del usuario actualmente autenticado.
  * Impone la regla de negocio de que un usuario no puede desvincular Google
  * si no tiene una contraseña de LifeBit establecida.
@@ -99,10 +237,18 @@ const actualizarPerfil = async (req, res, next) => {
  * @access Private
  */
 const desvinculaGoogle = async (req, res, next) => {
+    
 	try {
 		// 1. OBTENER IDENTIDAD SEGURA
 		// La identidad del usuario (su ID) se obtiene del token procesado por 'protegeRuta'.
-		const idUsuario = req.user.id;
+        const idUsuario = req.user.id;
+        
+        // Depuración básica para asegurar que tenemos el ID correcto.
+        console.log('--- DEPURANDO DESVINCULAR ---');
+		console.log('ID de Usuario a desvincular:', idUsuario);
+		console.log('Tipo de dato:', typeof idUsuario);
+		console.log('Query a ejecutar:', usuarioQueries.DESVINCULAR_GOOGLE_ID);
+		console.log('----------------------------');
 
 		// 2. OBTENER ESTADO ACTUAL DEL USUARIO
 		// Hacemos una consulta a la BD para obtener el registro completo y más reciente del usuario.
@@ -144,5 +290,7 @@ const desvinculaGoogle = async (req, res, next) => {
 module.exports = {
 	obtenerPerfil,
 	desvinculaGoogle,
-	actualizarPerfil,
+    actualizarPerfil,
+    verifyPassword,
+    requestEmailChange,
 };

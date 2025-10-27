@@ -22,6 +22,23 @@ router.get('/me', perfilController.obtenerPerfil);
 router.patch('/me', perfilController.actualizarPerfil);
 
 /**
+ * @route   POST /api/perfil/verify-password
+ * @desc    Verifica la contraseña actual del usuario para autorizar acciones sensibles.
+ *          Este es el primer paso antes de cambiar email o contraseña.
+ * @access  Private
+ */
+router.post('/verify-password', perfilController.verifyPassword);
+
+/**
+ * @route   POST /api/perfil/request-email-change
+ * @desc    Inicia el proceso de cambio de email para el usuario autenticado.
+ *          Guarda el nuevo email y genera los tokens de verificación. Es una ruta POST porque el 
+ *          cliente enviará el nuevo email en el cuerpo de la solicitud.
+ * @access  Private
+ */
+router.post('/request-email-change', perfilController.requestEmailChange);
+
+/**
  * @route   POST /api/perfil/google/desvincular
  * @desc    Desvincula la cuenta de Google del usuario, si tiene una contraseña establecida.
  * @access  Private

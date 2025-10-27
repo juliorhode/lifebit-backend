@@ -6,6 +6,17 @@ const CREA_EDIFICIO =
 
 const ACTUALIZA_EDIFICIO =
 	'UPDATE edificios SET nombre = $1, direccion = $2, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *'
+
+	const ACTUALIZA_TOTALES_EDIFICIO = `
+	UPDATE edificios 
+	SET total_pisos = $1, total_unidades = $2
+	WHERE id = $3 RETURNING *;
+`
+const ACTUALIZAR_ESTRUCTURA_EDIFICIO=`
+	UPDATE edificios 
+	SET pisos_sotano = $1, incluye_azotea = $2, fecha_actualizacion = CURRENT_TIMESTAMP
+	WHERE id = $3 RETURNING *;
+`
 const BORRA_EDIFICIO = 'DELETE FROM edificios WHERE id = $1 RETURNING *'
 
 /**
@@ -27,5 +38,7 @@ module.exports = {
 	ACTUALIZA_EDIFICIO,
 	BORRA_EDIFICIO,
 	OBTENER_EDIFICIO_POR_NOMBRE_ILIKE,
-	ACTUALIZA_ESTADO_CONFIGURACION
+	ACTUALIZA_ESTADO_CONFIGURACION,
+	ACTUALIZA_TOTALES_EDIFICIO,
+	ACTUALIZAR_ESTRUCTURA_EDIFICIO,
 }

@@ -18,7 +18,6 @@ const generaTokens = require('../../utils/jwtUtils');
 }
  * @access Public
  */
-
 const register = async (req, res, next) => {
 	try {
 		// Extraemos los datos del cuerpo de la petición
@@ -88,7 +87,6 @@ const register = async (req, res, next) => {
  * @description Ejem. {"email": "juliorhode@gmail.com","contraseña" :"123456789"}
  * @access Public
  */
-
 const login = async (req, res, next) => {
 	try {
 		// 1. Extraer email y contraseña del cuerpo de la petición.
@@ -194,16 +192,14 @@ const refreshToken = async (req, res, next) => {
 		const result = await db.query(queries.USUARIO_TOKEN, [decoded.id]);
 		const usuario = result.rows[0];
 		if (!usuario || usuario.estado !== 'activo') {
-			// Si el usuario no es válido, limpiamos la cookie para prevenir futuros intentos.
-			res.cookie('refreshToken', '', { httpOnly: true, expires: new Date(0) });
 			return next(new AppError('No se puede refrescar el token para este usuario', 403));
 		}
 		// 4. Si todo es correcto, generamos un NUEVO accessToken.
 		// Creamos el payload con la información fresca del usuario.
 		const payload = {
 			id: usuario.id,
-			rol: usuario.rol,
-			id_edificio: usuario.id_edificio_actual, // Incluimos el ID del edificio en el token
+			// rol: usuario.rol,
+			// id_edificio: user.id_edificio_actual, // Incluimos el ID del edificio en el token
 		};
 		// ¡Ojo! Solo generamos un nuevo accessToken. El refreshToken original sigue siendo válido
 		// hasta que expire. No necesitamos emitir uno nuevo en cada refresco.
@@ -215,21 +211,11 @@ const refreshToken = async (req, res, next) => {
 			success: true,
 			message: 'Token de acceso renovado exitosamente',
 			accessToken,
-			// cambio nuevo 
-			data: { usuario  // Enviamos también la información del usuario
-			},
+			data: {
+				usuario
+			}
 		});
 	} catch (error) {
-		if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-			// Si el token de refresco es inválido o expiró, es crucial limpiar la cookie.
-			res.cookie('refreshToken', '', {
-				httpOnly: true,
-				expires: new Date(0),
-			});
-			return next(
-				new AppError('Tu sesión ha caducado. Por favor, inicia sesión de nuevo.', 401)
-			);
-		}
 		next(error);
 	}
 };
@@ -578,6 +564,47 @@ const googleCallback = async (req, res, next) => {
 	}
 };
 
+/**
+ * @route   POST /api/auth/verify-email-change
+ * @desc    Verifica un token y finaliza el proceso de cambio de email de un usuario.
+ * @access  Public
+ */
+const verifyEmailChange = async (req, res, next) => {
+    try {
+        // --- 1. OBTENER Y VALIDAR TOKEN DE ENTRADA ---
+        const { token } = req.body;
+        if (!token) {
+            throw new AppError('No se proporcionó un token de verificación.', 400);
+        }
+
+        // --- 2. BUSCAR USUARIO POR TOKEN VÁLIDO ---
+        // Hasheamos el token recibido para buscarlo en la base de datos.
+        const tokenHasheado = crypto.createHash('sha256').update(token).digest('hex');
+
+        const {
+            rows: [usuario],
+        } = await db.query(usuarioQueries.OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL, [tokenHasheado]);
+
+        // Si no se encuentra un usuario, el token es inválido, ya fue usado o expiró.
+        if (!usuario) {
+            throw new AppError('El enlace de verificación es inválido o ha expirado.', 400);
+        }
+
+        // --- 3. EJECUTAR LA ACTUALIZACIÓN FINAL ---
+        // Si encontramos al usuario, procedemos a hacer el cambio definitivo.
+        await db.query(usuarioQueries.CONFIRMAR_CAMBIO_EMAIL, [usuario.id]);
+        
+        // --- 4. RESPUESTA EXITOSA ---
+        res.status(200).json({
+            success: true,
+            message: 'Tu dirección de email ha sido actualizada exitosamente. Por favor, inicia sesión con tu nuevo email.'
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
 	register,
 	login,
@@ -588,4 +615,5 @@ module.exports = {
 	updatePassword,
 	googleCallback,
 	logout,
+	verifyEmailChange,
 };

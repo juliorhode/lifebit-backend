@@ -33,6 +33,10 @@ router.post('/unidades/generar-flexible', unidadController.generarUnidadesFlexib
 // Para listar todos los apartamentos cargados del edificio
 // GET /api/admin/unidades/
 router.get('/unidades', unidadController.obtenerUnidades);
+// Para actualizar la estructura del edificio (pisos de sotano y azotea)
+// PATCH /api/admin/unidades/edificio
+router.patch('/unidades/edificio', unidadController.actualizarEstructuraEdificio);
+
 
 // --- RUTAS PARA GESTIONAR LOS *TIPOS* DE RECURSO ---
 

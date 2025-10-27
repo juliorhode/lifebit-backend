@@ -31,7 +31,15 @@ const ACTIVAR_USUARIO = `
     WHERE id = $2;
 `;
 
-const OBTENER_USUARIOS_POR_EMAILS = `SELECT email FROM usuarios WHERE email = ANY($1::varchar[]);`;
+/**
+ * @description Obtiene una lista de usuarios por sus emails.
+ * Esta query esta diseñada para la busqueda masiva. Recibe un array de emails. Devuelve todos los usuarios que coincidan con cualquiera de esos emails. Validacion de la "Invitacion masiva".
+ */
+const OBTENER_USUARIOS_POR_EMAILS = `SELECT id,email FROM usuarios WHERE email = ANY($1::varchar[]);`;
+/**
+ * @description Busca un usuario por su email. Se usa para verificar si un email ya está en uso.
+ */
+const OBTENER_USUARIO_POR_EMAIL = `SELECT id FROM usuarios WHERE email = $1;`;
 
 /**
  * @description Obtiene usuarios existentes basándose en una lista de emails O una lista de cédulas.
@@ -41,6 +49,18 @@ const OBTENER_USUARIOS_POR_EMAILS = `SELECT email FROM usuarios WHERE email = AN
 const GET_USUARIOS_EXISTENTES_POR_EMAIL_O_CEDULA = `
     SELECT email, cedula FROM usuarios 
     WHERE email = ANY($1::varchar[]) OR (cedula IS NOT NULL AND cedula = ANY($2::varchar[]));
+`;
+
+/**
+ * @description Guarda los datos temporales para el proceso de cambio de email.
+ */
+const GUARDAR_SOLICITUD_CAMBIO_EMAIL = `
+    UPDATE usuarios
+    SET
+        nuevo_email_pendiente = $1,
+        token_cambio_email = $2,
+        token_cambio_email_expira = $3
+    WHERE id = $4;
 `;
 
 /**
@@ -181,6 +201,28 @@ const ACTUALIZAR_PERFIL_USUARIO = `
     id_edificio_actual;
 `;
 
+/**
+ * @description Busca un usuario por su token de cambio de email que aún no ha expirado.
+ */
+const OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL = `
+    SELECT * FROM usuarios 
+    WHERE token_cambio_email = $1 AND token_cambio_email_expira > NOW();
+`;
+
+/**
+ * @description Finaliza el cambio de email: actualiza el email principal y limpia los campos temporales.
+ */
+const CONFIRMAR_CAMBIO_EMAIL = `
+    UPDATE usuarios
+    SET
+        email = nuevo_email_pendiente,
+        nuevo_email_pendiente = NULL,
+        token_cambio_email = NULL,
+        token_cambio_email_expira = NULL,
+        fecha_actualizacion = NOW()
+    WHERE id = $1;
+`;
+
 module.exports = {
 	CREA_USUARIO_INVITADO,
 	OBTENER_INVITADO_POR_TOKEN,
@@ -201,5 +243,9 @@ module.exports = {
 	VINCULAR_GOOGLE_ID,
 	OBTENER_USUARIO_ACTIVO_POR_EMAIL_SIN_GOOGLE,
 	OBTENER_USUARIO_POR_ID,
-	ACTUALIZAR_PERFIL_USUARIO, 
+    ACTUALIZAR_PERFIL_USUARIO, 
+    GUARDAR_SOLICITUD_CAMBIO_EMAIL,
+    OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL,
+    CONFIRMAR_CAMBIO_EMAIL,
+    OBTENER_USUARIO_POR_EMAIL
 };

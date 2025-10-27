@@ -55,10 +55,16 @@ CREATE TABLE usuarios (
     token_registro_expira TIMESTAMPTZ,
     token_reseteo_pass VARCHAR(255),
     token_reseteo_expira TIMESTAMPTZ,
+    nuevo_email_pendiente VARCHAR(255) UNIQUE,
+    token_cambio_email VARCHAR(255),
+    token_cambio_email_expira TIMESTAMPTZ,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 COMMENT ON TABLE usuarios IS 'Almacena la información personal de cada PERSONA física en el sistema. Es la fuente única de verdad para la identidad.';
+COMMENT ON COLUMN usuarios.nuevo_email_pendiente IS 'Almacena temporalmente la nueva dirección de email que está pendiente de verificación. Es UNIQUE para prevenir que dos usuarios intenten cambiar al mismo email pendiente.';
+COMMENT ON COLUMN usuarios.token_cambio_email IS 'Token hasheado para verificar la nueva dirección de email.';
+COMMENT ON COLUMN usuarios.token_cambio_email_expira IS 'Fecha de expiración para el token de cambio de email.';
 
 -- -----------------------------------------------------------------------------
 -- Tabla: licencias

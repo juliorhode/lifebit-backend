@@ -21,12 +21,19 @@ const USUARIO_TOKEN = `
         u.nombre,
         u.apellido,
         u.email,
+        u.cedula,
+        u.telefono,
         u.estado, 
         u.rol,
+        u.google_id,
         u.avatar_url,
         u.id_edificio_actual,
         e.nombre AS nombre_edificio,
-        e.estado_configuracion
+        e.estado_configuracion,
+        e.total_pisos,
+        e.total_unidades,
+        e.pisos_sotano,
+        e.incluye_azotea
     FROM usuarios AS u
     LEFT JOIN edificios AS e ON u.id_edificio_actual = e.id
     WHERE u.id = $1;
