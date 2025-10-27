@@ -65,6 +65,21 @@ const ACTUALIZA_ASIGNACIONES_MASIVO = `
         ra.id = v.id_recurso::int; 
 `;
 
+/**
+ * @description Actualiza masivamente los atributos de múltiples instancias de recursos.
+ */
+//c.id::integer: Este ::integer es una sintaxis de "casting" de PostgreSQL. Le estamos diciendo explícitamente a la base de datos: "Toma el valor de la columna c.id, sin importar lo que parezca, y trátalo como un INTEGER antes de hacer la comparación".
+const UPDATE_INVENTARIO_RECURSO_MASIVO = `
+    UPDATE recursos_asignados AS ra
+    SET
+        ubicacion = COALESCE(c.ubicacion, ra.ubicacion),
+        estado_operativo = COALESCE(c.estado_operativo, ra.estado_operativo)
+    FROM (VALUES %L) AS c(id, ubicacion, estado_operativo)
+    WHERE ra.id = c.id::integer AND ra.id_recurso_edificio IN (
+        SELECT id FROM recursos_edificio WHERE id_edificio = %s
+    );
+`;
+
 
 //NOTA:
 // Todas las queries incluyen AND id_edificio = $
@@ -106,5 +121,6 @@ module.exports = {
 	OBTENER_IDS_UNIDADES_POR_EDIFICIO,
 	OBTENER_IDS_RECURSOS_ASIGNADOS_POR_EDIFICIO,
 	ACTUALIZA_ASIGNACIONES_MASIVO,
-	OBTENER_RECURSOS_POR_TIPO,
+    OBTENER_RECURSOS_POR_TIPO,
+    UPDATE_INVENTARIO_RECURSO_MASIVO,
 };

@@ -68,6 +68,13 @@ router.patch('/recursos/asignaciones', recursoController.actualizarAsignaciones)
 // GET /api/admin/recursos/por-tipo/:idTipo
 router.get('/recursos/por-tipo/:idTipo', recursoController.obtenerRecursosPorTipo);
 
+/**
+ * @route   PATCH /api/admin/recursos/inventario
+ * @desc    Actualiza masivamente los atributos (ubicacion, estado) de instancias de recursos.
+ * @access  Private (administrador)
+ */
+router.patch('/recursos/inventario', recursoController.actualizarInventarioRecurso);
+
 // --- Rutas de Gestión de Residentes ---
 // Para invitar a un residente, también se requiere que las unidades ya existan.
 // Para invitar a residentes al edificio

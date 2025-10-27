@@ -101,7 +101,12 @@ CREATE TABLE edificios (
   id_contrato INTEGER NOT NULL UNIQUE REFERENCES contratos(id),
   moneda_funcional VARCHAR(3) NOT NULL DEFAULT 'USD',
   estado_configuracion VARCHAR(50) NOT NULL DEFAULT 'paso_1_unidades',
-  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  total_pisos INTEGER,
+  total_unidades INTEGER,
+  pisos_sotano INTEGER,
+  incluye_azotea BOOLEAN,
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fecha_actualizacion TIMESTAMPTZ
 );
 COMMENT ON COLUMN edificios.estado_configuracion IS 'Controla el paso actual del Asistente de Configuración Inicial.';
 COMMENT ON TABLE edificios IS 'Representa cada CONDOMINIO o propiedad gestionada. Es el cliente principal del SaaS.';
@@ -436,6 +441,8 @@ CREATE TABLE recursos_asignados (
   id_recurso_edificio INTEGER NOT NULL REFERENCES recursos_edificio(id) ON DELETE CASCADE,
   id_unidad INTEGER REFERENCES unidades(id) ON DELETE SET NULL,
   identificador_unico VARCHAR(100) NOT NULL,
+  ubicacion VARCHAR(255),
+  estado_operativo VARCHAR(50) NOT NULL DEFAULT 'operativo' CHECK (estado_operativo IN ('operativo', 'no_operativo','en_mantenimiento')),
   CONSTRAINT uq_recursos_asignados_identificador UNIQUE (id_recurso_edificio, identificador_unico)
 );
 COMMENT ON TABLE recursos_asignados IS 'Registro de la ASIGNACIÓN de un recurso específico a una unidad concreta.';

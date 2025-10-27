@@ -5,6 +5,7 @@ const unidadQueries = require('../../queries/unidadQueries');
 const format = require('pg-format');
 const ExcelJS = require('exceljs');
 
+
 /**
  * @description Crea un nuevo tipo de recurso para el edificio del administrador.
  * @route POST /api/admin/recursos/tipos
@@ -535,6 +536,78 @@ const actualizarAsignaciones = async (req, res, next) => {
 };
 
 /**
+ * @route   PATCH /api/admin/recursos/inventario
+ * @desc    Actualiza masivamente los atributos (ubicacion, estado) de múltiples instancias de recursos.
+ * @access  Private (administrador)
+ */
+const actualizarInventarioRecurso = async (req, res, next) => {
+	try {
+		// --- 1. EXTRACCIÓN Y VALIDACIÓN DEL PAYLOAD ---
+		const { cambios } = req.body;
+
+		if (!cambios || !Array.isArray(cambios) || cambios.length === 0) {
+			throw new AppError(
+				'El cuerpo de la petición debe contener un array "cambios" con al menos un elemento.',
+				400
+			);
+		}
+
+		// Validación de la estructura de cada elemento del array.
+		// Nos aseguramos de que cada elemento sea un array con 3 partes [id, ubicacion, estado].
+		for (const item of cambios) {
+			if (!Array.isArray(item) || item.length !== 3) {
+				throw new AppError(
+					'Cada elemento en "cambios" debe ser un array con el formato [id, ubicacion, estado_operativo].',
+					400
+				);
+			}
+
+			// Convertimos el ID a número y validamos.
+			const idRecurso = parseInt(item[0], 10);
+			if (isNaN(idRecurso)) {
+				throw new AppError(
+					`El ID del recurso debe ser un número válido. Se encontró: '${item[0]}'`,
+					400
+				);
+			}
+			// Reasignamos el ID ya convertido al array original para asegurar el tipo correcto.
+			item[0] = idRecurso;
+
+			// Opcional: Validar que el estado_operativo sea uno de los valores permitidos si se proporciona.
+			const estado = item[2];
+			const estadosValidos = ['operativo', 'no_operativo', 'en_mantenimiento', null];
+			if (!estadosValidos.includes(estado)) {
+				throw new AppError(`El estado operativo '${estado}' no es válido.`, 400);
+			}
+		}
+			
+
+		// --- 2. PREPARACIÓN DE LA QUERY MASIVA ---
+		const idEdificio = req.user.id_edificio_actual;
+
+		// Usamos pg-format para construir la query de forma segura.
+		// %L se reemplazará por la lista de valores: (id, ubicacion, estado), (id, ubicacion, estado)...
+		// %s se reemplazará por el idEdificio.
+		const sql = format(recursoQueries.UPDATE_INVENTARIO_RECURSO_MASIVO, cambios, idEdificio);
+
+		// --- 3. EJECUCIÓN EN LA BASE DE DATOS ---
+		const { rowCount } = await db.query(sql);
+
+		// --- 4. RESPUESTA EXITOSA ---
+		res.status(200).json({
+			success: true,
+			message: `Se han actualizado exitosamente ${rowCount} recursos.`,
+			data: {
+				registrosAfectados: rowCount,
+			},
+		});
+	} catch (error) {
+		// Pasamos cualquier error (ej. de la BD) a nuestro manejador global.
+		next(error);
+	}
+};
+
+/**
  * @description Obtiene todas las instancias de un tipo de recurso específico.
  * @route GET /api/admin/recursos/por-tipo/:idTipo
  * @access Private (administrador)
@@ -570,4 +643,5 @@ module.exports = {
 	cargaInventarioArchivo,
 	actualizarAsignaciones,
 	obtenerRecursosPorTipo,
+	actualizarInventarioRecurso,
 };
