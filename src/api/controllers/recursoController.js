@@ -591,14 +591,15 @@ const actualizarInventarioRecurso = async (req, res, next) => {
 		const sql = format(recursoQueries.UPDATE_INVENTARIO_RECURSO_MASIVO, cambios, idEdificio);
 
 		// --- 3. EJECUCIÓN EN LA BASE DE DATOS ---
-		const { rowCount } = await db.query(sql);
+		const resultado = await db.query(sql);
+		const registrosAfectados = resultado.rowCount;
 
 		// --- 4. RESPUESTA EXITOSA ---
 		res.status(200).json({
 			success: true,
-			message: `Se han actualizado exitosamente ${rowCount} recursos.`,
+			message: `Se han actualizado exitosamente ${registrosAfectados} recursos.`,
 			data: {
-				registrosAfectados: rowCount,
+				registrosAfectados: registrosAfectados,
 			},
 		});
 	} catch (error) {

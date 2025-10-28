@@ -203,10 +203,14 @@ const ACTUALIZAR_PERFIL_USUARIO = `
 
 /**
  * @description Busca un usuario por su token de cambio de email que aún no ha expirado.
+ * Usamos `SELECT ... FOR UPDATE`. La primera petición que llegue aquí
+ * bloqueará la fila del usuario. La segunda petición tendrá que esperar
+ * a que la primera termine su transacción.
  */
 const OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL = `
     SELECT * FROM usuarios 
-    WHERE token_cambio_email = $1 AND token_cambio_email_expira > NOW();
+    WHERE token_cambio_email = $1 AND token_cambio_email_expira > NOW()
+    FOR UPDATE;
 `;
 
 /**

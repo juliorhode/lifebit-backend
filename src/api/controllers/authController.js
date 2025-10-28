@@ -570,39 +570,61 @@ const googleCallback = async (req, res, next) => {
  * @access  Public
  */
 const verifyEmailChange = async (req, res, next) => {
-    try {
-        // --- 1. OBTENER Y VALIDAR TOKEN DE ENTRADA ---
-        const { token } = req.body;
-        if (!token) {
-            throw new AppError('No se proporcionó un token de verificación.', 400);
-        }
+	// Obtenemos un cliente del pool para manejar la transacción.
+	const cliente = await db.getClient();
+	try {
+		// --- 1. OBTENER Y VALIDAR TOKEN DE ENTRADA ---
+		const { token } = req.body;
+		if (!token) {
+			throw new AppError('No se proporcionó un token de verificación.', 400);
+		}
 
-        // --- 2. BUSCAR USUARIO POR TOKEN VÁLIDO ---
-        // Hasheamos el token recibido para buscarlo en la base de datos.
-        const tokenHasheado = crypto.createHash('sha256').update(token).digest('hex');
+		// Iniciamos la transacción.
+		await cliente.query('BEGIN');
 
-        const {
-            rows: [usuario],
-        } = await db.query(usuarioQueries.OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL, [tokenHasheado]);
+		// --- 2. BUSCAR USUARIO POR TOKEN VÁLIDO ---
+		// Hasheamos el token recibido para buscarlo en la base de datos.
+		const tokenHasheado = crypto.createHash('sha256').update(token).digest('hex');
 
-        // Si no se encuentra un usuario, el token es inválido, ya fue usado o expiró.
-        if (!usuario) {
-            throw new AppError('El enlace de verificación es inválido o ha expirado.', 400);
-        }
+		// Usamos `SELECT ... FOR UPDATE` en OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL
+		// La primera petición que llegue aquí bloqueará la fila del usuario.
+		// La segunda petición tendrá que esperar a que la primera termine su transacción.
+		const {
+			rows: [usuario],
+		} = await cliente.query(usuarioQueries.OBTENER_USUARIO_POR_TOKEN_CAMBIO_EMAIL, [
+			tokenHasheado,
+		]);
 
-        // --- 3. EJECUTAR LA ACTUALIZACIÓN FINAL ---
-        // Si encontramos al usuario, procedemos a hacer el cambio definitivo.
-        await db.query(usuarioQueries.CONFIRMAR_CAMBIO_EMAIL, [usuario.id]);
-        
-        // --- 4. RESPUESTA EXITOSA ---
-        res.status(200).json({
-            success: true,
-            message: 'Tu dirección de email ha sido actualizada exitosamente. Por favor, inicia sesión con tu nuevo email.'
-        });
+		// Para cuando la segunda petición pueda ejecutar su SELECT, la primera
+		// ya habrá hecho COMMIT y limpiado el token. Por lo tanto, el SELECT
+		// de la segunda petición no encontrará nada y entrará en este bloque.
+		// Si no se encuentra un usuario, el token es inválido, ya fue usado o expiró.
+		if (!usuario) {
+			// No es necesario hacer rollback si solo hemos hecho un SELECT.
+			throw new AppError('El enlace de verificación es inválido o ha expirado.', 400);
+		}
 
-    } catch (error) {
-        next(error);
-    }
+		// --- 3. EJECUTAR LA ACTUALIZACIÓN FINAL ---
+		// Si encontramos al usuario, procedemos a hacer el cambio definitivo.
+		await cliente.query(usuarioQueries.CONFIRMAR_CAMBIO_EMAIL, [usuario.id]);
+
+		// Confirmamos la transacción para guardar los cambios y liberar el bloqueo.
+		await cliente.query('COMMIT');
+
+		// --- 4. RESPUESTA EXITOSA ---
+		res.status(200).json({
+			success: true,
+			message:
+				'Tu dirección de email ha sido actualizada exitosamente. Por favor, inicia sesión con tu nuevo email.',
+		});
+	} catch (error) {
+		// Si algo falla, revertimos toda la transacción.
+		await cliente.query('ROLLBACK');
+		next(error);
+	} finally {
+		// Pase lo que pase, liberamos el cliente para devolverlo al pool.
+		cliente.release();
+	}
 };
 
 module.exports = {
